@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ratio Numerical – Finding Antecedent</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:900px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 10px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin:12px 0;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:17px;
+    line-height:1.6;
+    margin-top:14px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:10px;
+    font-size:13px;
+    color:#666;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Ratio Numerical</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// --------------------------------------------------
+// Question variants (INCLUDING original wording)
+// --------------------------------------------------
+const VARIANTS = [
+  (A,B,C)=> `In the ratio ${A}:${B}, if the consequent is ${C}, what is the antecedent?`,
+  (A,B,C)=> `The ratio of two quantities is ${A}:${B}. If the second quantity is ${C}, find the first quantity.`,
+  (A,B,C)=> `A ratio equivalent to ${A}:${B} has ${C} as its consequent. Find the corresponding antecedent.`,
+  (A,B,C)=> `Two numbers are in the ratio ${A}:${B}. If the latter number is ${C}, determine the former number.`
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// --------------------------------------------------
+// Generate clean problem
+// --------------------------------------------------
+function generateProblem(){
+  const A = r(2,9);
+  const B = r(2,9);
+
+  const multiplier = r(3,10);
+  const consequent = B * multiplier;
+  const antecedent = A * multiplier;
+
+  const variant = VARIANTS[r(0,VARIANTS.length-1)];
+  const question = variant(A,B,consequent);
+
+  return {A,B,consequent,antecedent,question,multiplier};
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  stepsEl.textContent="";
+  prompt.textContent="Press any key to reveal the solution…";
+
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+// --------------------------------------------------
+// Reveal solution (faithful to handwritten steps)
+// --------------------------------------------------
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {A,B,consequent,antecedent,multiplier} = DATA;
+
+  let t="";
+
+  t+="Writing ratio in simplest form as a fraction,\n";
+  t+=`${A}/${B}  … (1)\n\n`;
+
+  t+="Writing equivalent ratio with unknown antecedent,\n";
+  t+=`x : ${consequent}\n\n`;
+
+  t+="Writing equivalent ratio as fraction,\n";
+  t+=`x/${consequent}  … (2)\n\n`;
+
+  t+="Equating (1) and (2) to find x (the antecedent),\n";
+  t+=`${A}/${B} = x/${consequent}\n\n`;
+
+  t+=`⇒ ${A} × ${multiplier} / ${B} × ${multiplier} = x / ${consequent}\n\n`;
+
+  t+=`⇒ ${A} × ${multiplier} = x\n\n`;
+
+  t+=`∴ x = ${antecedent}\n\n`;
+
+  t+=`The antecedent is ${antecedent} and the equivalent ratio is ${antecedent}:${consequent}.`;
+
+  stepsEl.textContent = t;
+}
+
+// --------------------------------------------------
+window.addEventListener("keydown", e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){ reveal(); }
+  else{
+    if(k==="y") newProblem();
+    else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>

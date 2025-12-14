@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HCF-LCM Ratio Game</title>
+<style>
+  :root{--bg:#fff;--card:#fff;--muted:#666;--accent:#0b59c6}
+  html,body{height:100%;margin:0;background:var(--bg);
+    font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111}
+  .wrap{min-height:100%;display:flex;align-items:center;
+    justify-content:center;padding:20px}
+  .card{width:100%;max-width:1020px;background:var(--card);border-radius:10px;
+    padding:22px 20px;box-shadow:0 8px 28px rgba(16,49,90,0.06)}
+  h1{font-size:16px;margin:0 0 10px;font-weight:700}
+  .question{font-size:20px;color:var(--accent);margin:12px 0;font-weight:700}
+  .prompt{color:var(--muted);font-size:13px;margin-bottom:10px;font-style:italic}
+  .steps{white-space:pre-line;font-size:17px;line-height:1.45;color:#111;margin-top:12px}
+  .foot{margin-top:10px;color:var(--muted);font-size:13px}
+  .hidden{display:none}
+  .goodbye{padding:48px;text-align:center;font-size:20px;color:#333}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="card" role="main" aria-live="polite">
+    <h1>Find the Numbers (HCF–LCM Method)</h1>
+    <div class="question" id="qText">—</div>
+    <div class="prompt" id="prompt">Press any key to reveal the complete solution…</div>
+    <div id="stepsBox" class="steps hidden"></div>
+    <div class="foot">After reveal press <strong>y</strong> for next or <strong>n</strong> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  const variants = [
+    "If two numbers are in the ratio {A}:{B} and their LCM is {L}, find the numbers.",
+    "Given that two numbers are in the ratio {A}:{B} and their LCM equals {L}, determine the numbers.",
+    "Based on the ratio {A}:{B}, and knowing that their LCM is {L}, compute the two numbers.",
+    "Two numbers are in the ratio {A}:{B}. If their least common multiple is {L}, what are the numbers?",
+    "The ratio of two numbers is {A}:{B} and their LCM is {L}. Find the actual numbers."
+  ];
+
+  let A,B,x,LCM;
+  let stage="question";
+  const qEl=document.getElementById("qText");
+  const prompt=document.getElementById("prompt");
+  const stepsBox=document.getElementById("stepsBox");
+
+  function makeQuestion(){
+    stage="question";
+    stepsBox.classList.add("hidden");
+    stepsBox.textContent="";
+    prompt.textContent="Press any key to reveal the complete solution…";
+
+    // ratio values
+    while(true){
+      A=r(1,20);
+      B=r(1,20);
+      if(!(A===1 && B===1)) break;
+    }
+
+    // choose HCF x
+    x=r(1,20);
+
+    // Option A: clean guaranteed LCM
+    LCM = A * B * x;
+
+    // choose variant
+    let v = variants[r(0,variants.length-1)];
+
+    let q = v.replace(/\{A\}/g,A)
+             .replace(/\{B\}/g,B)
+             .replace(/\{L\}/g,LCM);
+
+    qEl.textContent = q;
+  }
+
+  function reveal(){
+    stage="answer";
+    prompt.textContent='Press "y" for next or "n" to exit.';
+    stepsBox.classList.remove("hidden");
+
+    // compute product side
+    let N1 = A * x;
+    let N2 = B * x;
+
+    let steps = "";
+
+    steps += "Step 1 — Let the two numbers be:\n";
+    steps += "1st number = " + A + "x\n";
+    steps += "2nd number = " + B + "x\n\n";
+
+    steps += "Step 2 — HCF = x\n\n";
+
+    steps += "Step 3 — Use the identity:\n";
+    steps += "Number 1 × Number 2 = HCF × LCM\n\n";
+
+    steps += "Step 4 — Substitute the values:\n";
+    steps += "(" + A + "x)(" + B + "x) = x × " + LCM + "\n\n";
+
+    steps += "Step 5 — Cancel x from both sides:\n";
+    steps += A + "×" + B + "× x = " + LCM + "\n\n";
+
+    steps += "Step 6 — Solve for x:\n";
+    steps += "x = " + LCM + " / (" + A + "×" + B + ")\n";
+    steps += "x = " + x + "\n\n";
+
+    steps += "Step 7 — Now compute the numbers:\n";
+    steps += "1st number = " + A + "×" + x + " = " + N1 + "\n";
+    steps += "2nd number = " + B + "×" + x + " = " + N2 + "\n\n";
+
+    steps += "Final Answer:\n";
+    steps += N1 + " and " + N2;
+
+    stepsBox.textContent = steps;
+  }
+
+  makeQuestion();
+
+  window.addEventListener("keydown",function(e){
+    const k=(e.key||"").toLowerCase();
+    if(stage==="question"){
+      reveal();
+    } else if(stage==="answer"){
+      if(k==="y"){
+        makeQuestion();
+      } else if(k==="n"){
+        document.getElementById("card").innerHTML =
+          '<div class="goodbye">Goodbye — thanks for learning!<div style="font-size:13px;color:#666;margin-top:8px">You may now close this tab.</div></div>';
+      }
+    }
+  });
+
+  document.addEventListener("selectstart", e => e.preventDefault());
+
+})();
+</script>
+</body>
+</html>

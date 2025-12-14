@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Triangle Ratio – Find the Sides</title>
+<style>
+  :root{--bg:#fff;--card:#fff;--muted:#666;--accent:#0b59c6}
+  html,body{
+    height:100%;margin:0;background:var(--bg);
+    font-family:Segoe UI,Roboto,Arial,sans-serif;color:#111;
+  }
+  .wrap{
+    min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .card{
+    width:100%;max-width:980px;background:var(--card);
+    border-radius:10px;padding:22px 20px;
+    box-shadow:0 8px 28px rgba(16,49,90,0.06);
+  }
+  h1{font-size:16px;margin:0 0 10px;font-weight:700}
+  .question{font-size:20px;color:var(--accent);margin:12px 0;font-weight:700}
+  .prompt{color:var(--muted);font-size:13px;margin-bottom:10px;font-style:italic}
+  .steps{white-space:pre-line;font-size:17px;line-height:1.55;color:#111;margin-top:12px}
+  .foot{margin-top:10px;color:var(--muted);font-size:13px}
+  .hidden{display:none}
+  .goodbye{padding:48px;text-align:center;font-size:20px;color:#333}
+  .box{
+    display:inline-block;border:2px solid #7aa6ff;
+    padding:2px 6px;border-radius:6px;background:#eaf2ff;
+    margin-left:4px;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card" role="main" aria-live="polite">
+    <h1>Triangle Ratio Problem</h1>
+    <div class="question" id="qText">—</div>
+    <div class="prompt" id="prompt">Press any key to reveal all steps…</div>
+    <div id="stepsBox" class="steps hidden"></div>
+    <div class="foot">After reveal press <strong>y</strong> for next or <strong>n</strong> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // Units list
+  const UNITS = ["mm","cm","m","km","in","ft","yd"];
+
+  // Context objects list (triangular ____ )
+  const CONTEXTS = [
+    "park","garden","plot","field","tent","banner","poster","billboard","roof frame",
+    "wooden board","wall section","metal plate","glass panel","table surface","table top",
+    "signboard","carpet","cloth piece","art canvas","playground marking","floor tile",
+    "land parcel","courtyard section","stage panel","workstation divider","ceramic tile",
+    "foam board","decorative panel","exhibition display","model base"
+  ];
+
+  function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  // Generate a proper triangle ratio triple satisfying triangle inequality
+  function getTriangleRatio(){
+    while(true){
+      let A=r(1,10), B=r(1,10), C=r(1,10);
+      // avoid trivial equality
+      if(A===B && B===C) continue;
+
+      let arr=[A,B,C].sort((x,y)=>x-y);
+      if(arr[2] < arr[0] + arr[1]) return {A,B,C};
+      // else regenerate
+    }
+  }
+
+  let stage="question";
+  const qEl=document.getElementById("qText");
+  const stepsEl=document.getElementById("stepsBox");
+  const prompt=document.getElementById("prompt");
+
+  let DATA=null;
+
+  function newProblem(){
+    stage="question";
+    stepsEl.classList.add("hidden");
+    stepsEl.textContent="";
+    prompt.textContent="Press any key to reveal all steps…";
+
+    // select context object
+    const ctx = CONTEXTS[r(0,CONTEXTS.length-1)];
+
+    // select a proper triangle ratio
+    const {A,B,C} = getTriangleRatio();
+
+    // pick scale factor and unit
+    const a=r(1,20);
+    const unit = UNITS[r(0,UNITS.length-1)];
+
+    // perimeter S
+    const S=(A+B+C)*a;
+
+    // Construct the question
+    const q = 
+      "The sides of a triangular " + ctx + 
+      " are in the ratio " + A + " : " + B + " : " + C + 
+      ". If the perimeter is " + S + unit + ", find its sides.";
+
+    DATA={A,B,C,a,S,unit,ctx};
+    qEl.textContent=q;
+  }
+
+  function reveal(){
+    stage="answer";
+    stepsEl.classList.remove("hidden");
+    prompt.textContent='Press "y" for next or "n" to exit.';
+
+    const {A,B,C,a,S,unit,ctx} = DATA;
+
+    const s1=A*a, s2=B*a, s3=C*a;
+
+    let t="";
+
+    // Step 1 — Let sides be...
+    t+="Step 1 — Let the sides be:\n";
+    t+="side 1 = x = "+A+"a\n";
+    t+="side 2 = y = "+B+"a\n";
+    t+="side 3 = z = "+C+"a\n\n";
+
+    // Step 2 — Perimeter equation
+    t+="Total length (Perimeter) = side1 + side2 + side3\n";
+    t+="                         = "+A+"a + "+B+"a + "+C+"a = "+S+unit+"\n\n";
+
+    // Step 3 — Solve for a
+    t+="Solve for a from above equation:\n";
+    t+="⇒ "+A+"a + "+B+"a + "+C+"a = "+S+"\n";
+    t+="⇒ "+(A+B)+"a + "+C+"a = "+S+"\n";
+    t+="⇒ "+(A+B+C)+"a = "+S+"\n";
+    t+="⇒ a = "+S+" ÷ "+(A+B+C)+" = "+a+"\n\n";
+
+    // Step 4 — Substitute
+    t+="Substitute a = "+a+" to find the 3 sides:\n";
+    t+="side 1 = x = "+A+"a = "+A+"×"+a+" = "+s1+unit+"\n";
+    t+="side 2 = y = "+B+"a = "+B+"×"+a+" = "+s2+unit+"\n";
+    t+="side 3 = z = "+C+"a = "+C+"×"+a+" = "+s3+unit+"\n\n";
+
+    // Step 5 — Verification
+    t+="Verification:\n";
+    t+="s₁ + s₂ + s₃ = "+s1+" + "+s2+" + "+s3+"\n";
+    t+="             = "+(s1+s2)+" + "+s3+"\n";
+    t+="             = "+(s1+s2+s3)+unit+"\n";
+    t+="Verified.\n";
+
+    stepsEl.textContent=t;
+  }
+
+  // event handling
+  window.addEventListener("keydown",e=>{
+    const k=(e.key||"").toLowerCase();
+    if(stage==="question") reveal();
+    else if(stage==="answer"){
+      if(k==="y") newProblem();
+      else if(k==="n"){
+        document.getElementById("card").innerHTML =
+          '<div class="goodbye">Goodbye — thanks for learning!<br><span style="font-size:13px;color:#777">You may now close this tab.</span></div>';
+      }
+    }
+  });
+
+  document.addEventListener("selectstart",e=>e.preventDefault());
+
+  newProblem();
+
+})();
+</script>
+</body>
+</html>

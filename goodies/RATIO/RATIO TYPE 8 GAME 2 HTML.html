@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ratio Numerical (Part–Part–Total)</title>
+<style>
+  :root{--bg:#fff;--card:#fff;--muted:#666;--accent:#0b59c6;}
+  html,body{
+    height:100%;margin:0;background:var(--bg);
+    font-family:Segoe UI,Roboto,Arial,sans-serif;color:#111;
+  }
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{width:100%;max-width:1000px;background:var(--card);border-radius:10px;padding:22px 20px;
+    box-shadow:0 8px 28px rgba(16,49,90,0.06);}
+  h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+  .question{font-size:20px;color:var(--accent);margin:12px 0;font-weight:700;}
+  .prompt{color:var(--muted);font-size:13px;margin-bottom:10px;font-style:italic;}
+  .steps{white-space:pre-line;font-size:17px;line-height:1.55;margin-top:12px;}
+  .hidden{display:none;}
+  .foot{margin-top:10px;color:var(--muted);font-size:13px;}
+  .goodbye{padding:48px;text-align:center;font-size:20px;color:#333;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card" role="main" aria-live="polite">
+    <h1>Ratio Numerical</h1>
+    <div class="question" id="qText">—</div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div id="stepsBox" class="steps hidden"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// --------------------------------------------------
+// Triplets with decimal-allowed flag
+// [Part-1, Part-2, Total, decimalAllowed]
+// --------------------------------------------------
+const TRIPLETS = [
+ ["Zinc","Copper","Alloy", true],
+ ["Boys","Girls","Students", false],
+ ["Passing students","Failing students","Students", false],
+ ["Cost Price","Profit","Selling Price", true],
+ ["Marks Obtained","Marks Lost","Total Marks", false],
+ ["Correct Answers","Incorrect Answers","Total Questions", false],
+ ["Work Done","Work Remaining","Total Work", true],
+ ["Produced Goods","Unproduced Goods","Total Output", false],
+ ["Used Length","Remaining Length","Total Length", true],
+ ["Covered Area","Free Area","Total Area", true],
+ ["Savings","Expenditure","Income", true],
+ ["Money Saved","Money Spent","Total Money", true],
+ ["Used Quantity","Remaining Quantity","Total Quantity", false],
+ ["Weight Used","Weight Left","Total Weight", true],
+ ["Completed Work","Remaining Work","Total Job", false],
+ ["Score","Shortfall","Maximum Marks", false],
+ ["Tax","Net Income","Gross Income", true],
+ ["Deductions","Net Pay","Gross Salary", true],
+ ["Amount Given","Amount Left","Total Money", true],
+ ["Discount","Selling Price","Marked Price", true],
+ ["Loss","Cost Price","Selling Price", true],
+ ["Profit","Cost Price","Selling Price", true],
+ ["Work Completed","Work Pending","Total Work", false],
+ ["Covered Distance","Remaining Distance","Total Distance", true],
+ ["Solved Problems","Unsolved Problems","Total Problems", false],
+ ["Men","Women","People", false],
+ ["Zinc content","Copper content","Alloy", true]
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+// ---- decimal rectifier (THE FIX) ----
+function clean(n, allowDecimal){
+  return allowDecimal ? Number(n.toFixed(1)) : Math.round(n);
+}
+
+// --------------------------------------------------
+// Generate problem
+// --------------------------------------------------
+function generateProblem(){
+  const [P1, P2, TOTAL, allowDecimal] = TRIPLETS[r(0,TRIPLETS.length-1)];
+
+  const A = r(5,9);
+  const B = r(6,11);
+
+  let a;
+  if(allowDecimal){
+    a = r(10,30) / 10;   // decimal allowed
+  } else {
+    a = r(2,20);         // integer only
+  }
+
+  const rawPart2 = B * a;
+  const rawPart1 = A * a;
+  const rawTotal = rawPart1 + rawPart2;
+
+  const part2Value = clean(rawPart2, allowDecimal);
+  const part1Value = clean(rawPart1, allowDecimal);
+  const totalValue = clean(rawTotal, allowDecimal);
+
+  const question =
+    `The ratio of ${P1.toLowerCase()} and ${P2.toLowerCase()} is ${A} : ${B}. `
+  + `If the ${P2.toLowerCase()} is ${part2Value}, `
+  + `find the ${P1.toLowerCase()} and the ${TOTAL.toLowerCase()}.`;
+
+  return {
+    P1,P2,TOTAL,A,B,a,allowDecimal,
+    part1Value,part2Value,totalValue,
+    question
+  };
+}
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  stepsEl.textContent="";
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {
+    P1,P2,TOTAL,A,B,a,allowDecimal,
+    part1Value,part2Value,totalValue
+  } = DATA;
+
+  const aDisplay = allowDecimal ? Number(a.toFixed(1)) : a;
+
+  let t="";
+  t+=`Let ${P1.toLowerCase()} = x = ${A}a  … (1)\n`;
+  t+=`Let ${P2.toLowerCase()} = y = ${B}a = ${part2Value}  … (2)\n\n`;
+
+  t+=`From (2):\n`;
+  t+=`${B}a = ${part2Value}\n`;
+  t+=`a = ${part2Value} ÷ ${B}\n`;
+  t+=`a = ${aDisplay}\n\n`;
+
+  t+=`Substitute a = ${aDisplay} in (1):\n`;
+  t+=`x = ${A}a = ${A} × ${aDisplay} = ${part1Value}\n\n`;
+
+  t+=`Total ${TOTAL.toLowerCase()} = ${P1.toLowerCase()} + ${P2.toLowerCase()}\n`;
+  t+=`= ${part1Value} + ${part2Value}\n`;
+  t+=`= ${totalValue}\n\n`;
+
+  t+=`${P1} = ${part1Value}\n`;
+  t+=`${P2} = ${part2Value}\n`;
+  t+=`${TOTAL} = ${totalValue}\n`;
+
+  stepsEl.textContent=t;
+}
+
+window.addEventListener("keydown", e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){ reveal(); }
+  else if(stage==="answer"){
+    if(k==="y") newProblem();
+    else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        '<div class="goodbye">Goodbye — thanks for learning.</div>';
+    }
+  }
+});
+
+newProblem();
+
+})();
+</script>
+
+</body>
+</html>

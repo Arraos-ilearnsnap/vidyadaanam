@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Contextual Ratio — Find the Numbers</title>
+<style>
+  :root{--bg:#fff;--card:#fff;--muted:#666;--accent:#0b59c6}
+  html,body{
+    height:100%;margin:0;background:var(--bg);
+    font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;
+  }
+  .wrap{
+    min-height:100%;display:flex;align-items:center;
+    justify-content:center;padding:20px;
+  }
+  .card{
+    width:100%;max-width:980px;background:var(--card);
+    border-radius:10px;padding:20px;
+    box-shadow:0 8px 28px rgba(16,49,90,0.06);
+  }
+  h1{font-size:16px;margin:0 0 10px;font-weight:700}
+  .question{font-size:19px;color:var(--accent);margin:12px 0;font-weight:700}
+  .prompt{color:var(--muted);font-size:13px;margin-bottom:10px;font-style:italic}
+  .steps{white-space:pre-line;font-size:17px;line-height:1.6;color:#111;margin-top:12px}
+  .foot{margin-top:10px;color:var(--muted);font-size:13px}
+  .hidden{display:none}
+  .goodbye{padding:48px;text-align:center;font-size:20px;color:#333}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card" role="main" aria-live="polite">
+    <h1>Contextual Ratio Problem</h1>
+    <div class="question" id="qText">—</div>
+    <div class="prompt" id="prompt">Press any key to reveal the step-by-step solution…</div>
+    <div id="stepsBox" class="steps hidden"></div>
+    <div class="foot">After reveal: press <strong>y</strong> for next or <strong>n</strong> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // QUADRUPLETS → [subject1, subject2, context, group noun]
+  const QUADS = [
+    ["cats","dogs","animal shelter","animals"],
+    ["lions","tigers","wildlife reserve","animals"],
+    ["cows","buffaloes","dairy farm","cattle"],
+    ["parrots","pigeons","bird sanctuary","birds"],
+    ["rabbits","guinea pigs","pet center","animals"],
+    ["horses","ponies","riding academy","horses"],
+    ["ducks","geese","lakeside park","birds"],
+    ["sheep","goats","hillside ranch","livestock"],
+    ["monkeys","baboons","forest enclosure","primates"],
+    ["dolphins","seals","marine center","marine animals"],
+    ["boys","girls","school","students"],
+    ["students","teachers","institute","members"],
+    ["workers","supervisors","factory","staff"],
+    ["players","coaches","sports academy","members"],
+    ["men","women","community center","people"],
+    ["volunteers","staff","health camp","participants"],
+    ["engineers","technicians","workshop","employees"],
+    ["singers","dancers","performing arts center","performers"],
+    ["juniors","seniors","training camp","trainees"],
+    ["employees","interns","office","staff"],
+    ["books","notebooks","library","items"],
+    ["pens","pencils","stationery shop","stationery"],
+    ["chairs","tables","classroom","furniture"],
+    ["jerseys","shorts","sports club","uniforms"],
+    ["cups","plates","cafeteria","utensils"],
+    ["apples","oranges","fruit market","fruits"],
+    ["laptops","tablets","tech store","devices"],
+    ["shirts","trousers","clothing store","garments"],
+    ["blocks","cylinders","toy workshop","toys"],
+    ["brushes","paints","art studio","art supplies"],
+    ["buses","vans","transport depot","vehicles"],
+    ["bicycles","scooters","rental center","vehicles"],
+    ["cars","trucks","parking garage","vehicles"],
+    ["trains","coaches","railway station","trains"],
+    ["ships","boats","harbor terminal","vessels"],
+    ["queries","responses","help desk","tickets"],
+    ["orders","deliveries","warehouse","packages"],
+    ["coins","notes","cash counter","currency"],
+    ["goals","assists","football club","statistics"],
+    ["tickets","passes","event center","entries"]
+  ];
+
+  // 5 linguistic variants with correction applied → "total {group}"
+  const VARIANTS = [
+    "The {s1} and the {s2} in the {ctx} are in the ratio {A}:{B}. If the total {group} is {S}, find the number of {s1} and {s2}.",
+    "Let the number of {s1} and {s2} in a {ctx} be in the ratio {A}:{B}. If the total {group} is {S}, find how many {s1} and how many {s2}.",
+    "In a {ctx}, the {s1} and {s2} are in the ratio {A}:{B}. If the total {group} is {S}, calculate the number of {s1} and {s2}.",
+    "If the {s1} and {s2} in the {ctx} are in the ratio {A}:{B} and the total {group} is {S}, find the number of each.",
+    "Find the numbers of {s1} and {s2} in the {ctx} if they are in the ratio {A}:{B} and the total {group} is {S}."
+  ];
+
+  function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  function makeVarName(word, used){
+    let clean = word.replace(/[^A-Za-z]/g,"");
+    if(!clean) clean="N";
+    let c = clean[0].toUpperCase();
+    if(used.has(c)){
+      c = clean.substring(0,2).toUpperCase();
+      if(used.has(c)){
+        let i=1; while(used.has(c+i)) i++;
+        c=c+i;
+      }
+    }
+    used.add(c);
+    return c;
+  }
+
+  const qEl = document.getElementById("qText");
+  const stepsBox = document.getElementById("stepsBox");
+  const prompt = document.getElementById("prompt");
+
+  let DATA=null;
+  let stage="question";
+
+  function newProblem(){
+    stage="question";
+    stepsBox.classList.add("hidden");
+    stepsBox.textContent="";
+    prompt.textContent="Press any key to reveal the step-by-step solution…";
+
+    const quad = QUADS[r(0,QUADS.length-1)];
+    const [s1,s2,ctx,group] = quad;
+
+    let A=r(2,12), B=r(2,12);
+    if(A===B) B=A+1;
+
+    const a = r(2,25);
+    const S = (A+B)*a;
+
+    const used=new Set();
+    const V1=makeVarName(s1,used);
+    const V2=makeVarName(s2,used);
+
+    const template = VARIANTS[r(0,VARIANTS.length-1)];
+    const qText = template
+      .replace(/\{s1\}/g,s1)
+      .replace(/\{s2\}/g,s2)
+      .replace(/\{ctx\}/g,ctx)
+      .replace(/\{group\}/g,group)
+      .replace(/\{A\}/g,A)
+      .replace(/\{B\}/g,B)
+      .replace(/\{S\}/g,S);
+
+    DATA={s1,s2,ctx,group,A,B,a,S,V1,V2};
+    qEl.textContent=qText;
+  }
+
+  function reveal(){
+    stage="answer";
+    prompt.textContent='Press "y" for next or "n" to exit.';
+    stepsBox.classList.remove("hidden");
+
+    const {s1,s2,ctx,group,A,B,a,S,V1,V2} = DATA;
+    const n1 = A*a, n2 = B*a;
+
+    let t="";
+
+    t+="Step 1 — Let number of "+s1+" = "+V1+" = "+A+"x\n";
+    t+="            number of "+s2+" = "+V2+" = "+B+"x\n\n";
+
+    t+="Total "+group+" = no. of "+s1+" + no. of "+s2+"\n";
+    t+="              = "+V1+" + "+V2+" = "+A+"x + "+B+"x = "+S+"\n\n";
+
+    t+="Solve for x:\n";
+    t+="⇒ "+A+"x + "+B+"x = "+S+"\n";
+    t+="⇒ "+(A+B)+"x = "+S+"\n";
+    t+="⇒ x = "+S+" ÷ "+(A+B)+" = "+a+"\n\n";
+
+    t+="Substitute x = "+a+" to find number of "+s1+" & "+s2+":\n";
+    t+=V1+" = no. of "+s1+" = "+A+"x = "+A+"×"+a+" = "+n1+"\n";
+    t+=V2+" = no. of "+s2+" = "+B+"x = "+B+"×"+a+" = "+n2+"\n\n";
+
+    t+="So, number of "+s1+" are "+n1+" and number of "+s2+" are "+n2+".\n\n";
+
+    t+="Verification:\n";
+    t+=V1+" + "+V2+" = "+n1+" + "+n2+"\n";
+    t+="         = "+(n1+n2)+"\n";
+    t+="Verified.\n";
+
+    stepsBox.textContent=t;
+  }
+
+  newProblem();
+
+  window.addEventListener("keydown",e=>{
+    const k=(e.key||"").toLowerCase();
+    if(stage==="question"){ reveal(); }
+    else if(stage==="answer"){
+      if(k==="y"){ newProblem(); }
+      else if(k==="n"){
+        document.getElementById("card").innerHTML =
+          '<div class="goodbye">Goodbye — thanks for learning!<br><span style="font-size:13px;color:#777">You may now close this tab.</span></div>';
+      }
+    }
+  });
+
+  document.addEventListener("selectstart",e=>e.preventDefault());
+
+})();
+</script>
+</body>
+</html>
