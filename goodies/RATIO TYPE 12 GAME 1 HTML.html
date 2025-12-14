@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Equivalent Ratios</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:900px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 12px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:17px;
+    line-height:1.6;
+    margin-top:16px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:12px;
+    font-size:13px;
+    color:#666;
+  }
+  .box{
+    display:inline-block;
+    padding:2px 8px;
+    border:1px solid #000;
+    margin:4px 0;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Equivalent Ratios</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function gcd(a,b){
+  while(b){ [a,b]=[b,a%b]; }
+  return a;
+}
+
+// -------------------------------
+// Linguistic variants (3 styles)
+// -------------------------------
+const VARIANTS = [
+  (a,b)=>`Give two equivalent ratios of ${a} : ${b}.`,
+  (a,b)=>`Find any two ratios equivalent to ${a} : ${b}.`,
+  (a,b)=>`Write two ratios which are equivalent to ${a} : ${b}.`
+];
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// -------------------------------
+// Generate problem
+// -------------------------------
+function generateProblem(){
+  let a=r(2,20), b=r(2,20);
+  while(a===b) b=r(2,20);
+
+  const g = gcd(a,b);
+
+  // multipliers for equivalent ratios
+  let m1 = r(2,6);
+  let m2;
+  do{ m2 = r(7,12); } while(m2===m1);
+
+  const variant = VARIANTS[r(0,VARIANTS.length-1)];
+
+  return {
+    a,b,g,
+    m1,m2,
+    question: variant(a,b)
+  };
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  stepsEl.textContent="";
+  prompt.textContent="Press any key to reveal the solution…";
+
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+// -------------------------------
+// Reveal solution (faithful steps)
+// -------------------------------
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {a,b,g,m1,m2} = DATA;
+
+  let t="";
+
+  t+="Step 1 — Write the given ratio as a fraction\n";
+  t+=`${a} : ${b} = ${a}/${b}\n\n`;
+
+  t+="Step 2 — Check for common factors\n";
+  if(g>1){
+    t+=`gcd(${a}, ${b}) = ${g}\n`;
+    t+="So the fraction can be simplified.\n\n";
+
+    t+="Step 3 — Simplify the fraction to get one equivalent ratio\n";
+    t+=`${a}/${b} = (${a} ÷ ${g}) / (${b} ÷ ${g}) = ${a/g}/${b/g}\n\n`;
+    t+="So, the first equivalent ratio is:\n";
+    t+=`[ ${a/g} : ${b/g} ]  (Answer i)\n\n`;
+
+    t+="Step 4 — Obtain another equivalent ratio by multiplication\n";
+    t+=`${a/g}/${b/g} × ${m1}/${m1} = ${(a/g)*m1}/${(b/g)*m1}\n\n`;
+    t+="So, the second equivalent ratio is:\n";
+    t+=`[ ${(a/g)*m1} : ${(b/g)*m1} ]  (Answer ii)\n\n`;
+
+    t+="Final Answer\n";
+    t+=`The two equivalent ratios are:\n`;
+    t+=`[ ${a/g} : ${b/g} ]  and  [ ${(a/g)*m1} : ${(b/g)*m1} ]\n`;
+
+  }else{
+    t+="The numerator and denominator have no common factor.\n";
+    t+="So the fraction is already in simplest form.\n\n";
+
+    t+="Step 3 — (Skipped, as no simplification is possible)\n\n";
+
+    t+="Step 4 — Obtain equivalent ratios by multiplication\n";
+    t+=`${a}/${b} × ${m1}/${m1} = ${a*m1}/${b*m1}\n`;
+    t+="So, the first equivalent ratio is:\n";
+    t+=`[ ${a*m1} : ${b*m1} ]  (Answer i)\n\n`;
+
+    t+=`${a}/${b} × ${m2}/${m2} = ${a*m2}/${b*m2}\n`;
+    t+="So, the second equivalent ratio is:\n";
+    t+=`[ ${a*m2} : ${b*m2} ]  (Answer ii)\n\n`;
+
+    t+="Final Answer\n";
+    t+=`The two equivalent ratios are:\n`;
+    t+=`[ ${a*m1} : ${b*m1} ]  and  [ ${a*m2} : ${b*m2} ]\n`;
+  }
+
+  stepsEl.textContent = t;
+}
+
+// -------------------------------
+window.addEventListener("keydown", e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){ reveal(); }
+  else{
+    if(k==="y") newProblem();
+    else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>

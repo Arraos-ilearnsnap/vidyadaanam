@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ratio of Prices (Unitary Method)</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:950px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 10px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin:12px 0;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:17px;
+    line-height:1.6;
+    margin-top:14px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:10px;
+    font-size:13px;
+    color:#666;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Ratio Numerical</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// ---------------- BULK UNITS ----------------
+const BULK_UNITS = [
+  ["score",20],["dozen",12],["half-dozen",6],["pair",2],
+  ["bundle of 10",10],["box of 10",10],["box of 12",12],
+  ["set of 6",6],["set of 10",10],["lot of 20",20]
+];
+
+// ---------------- CURRENCIES ----------------
+const CURRENCIES = ["₹","$","€","£","¥"];
+
+// ---------------- ITEM PAIRS ----------------
+const ITEM_PAIRS = [
+  ["pencil","ball pen","low"],
+  ["eraser","sharpener","low"],
+  ["chalk","duster","low"],
+  ["notebook","register","medium"],
+  ["marker","sketch pen","medium"],
+  ["soap","detergent bar","low"],
+  ["bulb","tube light","medium"],
+  ["pen refill","ink cartridge","medium"]
+];
+
+// ---------------- QUESTION VARIANTS ----------------
+const VARIANTS = [
+  (a,b,u1,u2,c1,c2)=>
+    `Find the ratio of the price of ${a} to that of ${b}, if ${a}s cost ${c1} per ${u1} and ${b}s cost ${c2} per ${u2}.`,
+  (a,b,u1,u2,c1,c2)=>
+    `${a}s are sold at ${c1} for a ${u1}, while ${b}s are sold at ${c2} for a ${u2}. Find the ratio of their prices.`,
+  (a,b,u1,u2,c1,c2)=>
+    `The cost of ${a}s is ${c1} per ${u1} and the cost of ${b}s is ${c2} per ${u2}. Compare the price of one ${a} with one ${b}.`
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+// -------- GCD (for simplification) --------
+function gcd(a,b){
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+// -------- Convert decimal ratio ONCE, then simplify --------
+function cleanRatio(x,y){
+  const dx = (x.toString().split(".")[1] || "").length;
+  const dy = (y.toString().split(".")[1] || "").length;
+  const scale = Math.pow(10, Math.max(dx, dy));
+
+  let a = Math.round(x * scale);
+  let b = Math.round(y * scale);
+
+  const g = gcd(a,b);
+  return [a/g, b/g];
+}
+
+// ---------------- GENERATE PROBLEM ----------------
+function generateProblem(){
+  const [item1,item2,tag] = ITEM_PAIRS[r(0,ITEM_PAIRS.length-1)];
+  const currency = CURRENCIES[r(0,CURRENCIES.length-1)];
+  const [unit1,qty1] = BULK_UNITS[r(0,BULK_UNITS.length-1)];
+  const [unit2,qty2] = BULK_UNITS[r(0,BULK_UNITS.length-1)];
+
+  const base = tag==="low" ? r(5,20) : r(20,80);
+  const price1 = base * qty1;
+  const price2 = (base + r(1,5)) * qty2;
+
+  const unitPrice1 = price1 / qty1;
+  const unitPrice2 = price2 / qty2;
+
+  const [r1,r2] = cleanRatio(unitPrice1, unitPrice2);
+
+  const variant = VARIANTS[r(0,VARIANTS.length-1)];
+  const question = variant(
+    item1,item2,
+    unit1,unit2,
+    currency+price1,currency+price2
+  );
+
+  return {
+    item1,item2,unit1,unit2,qty1,qty2,
+    price1,price2,unitPrice1,unitPrice2,
+    r1,r2,currency,question
+  };
+}
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// ---------------- NEW PROBLEM ----------------
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  stepsEl.textContent="";
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+// ---------------- REVEAL SOLUTION ----------------
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const d = DATA;
+  let t="";
+
+  t+=`Cost of 1 ${d.item1}:\n`;
+  t+=`${d.currency}${d.price1} → ${d.qty1} ${d.item1}s (${d.unit1})\n`;
+  t+=`${d.currency}x → 1 ${d.item1}\n\n`;
+  t+=`⇒ ${d.price1} × 1 = ${d.qty1} × x\n`;
+  t+=`⇒ x = ${d.price1} ÷ ${d.qty1} = ${d.unitPrice1}\n\n`;
+
+  t+=`Cost of 1 ${d.item2}:\n`;
+  t+=`${d.currency}${d.price2} → ${d.qty2} ${d.item2}s (${d.unit2})\n`;
+  t+=`${d.currency}y → 1 ${d.item2}\n\n`;
+  t+=`⇒ ${d.price2} × 1 = ${d.qty2} × y\n`;
+  t+=`⇒ y = ${d.price2} ÷ ${d.qty2} = ${d.unitPrice2}\n\n`;
+
+  t+=`Ratio of price of ${d.item1} to ${d.item2}:\n`;
+  t+=`cost of 1 ${d.item1} / cost of 1 ${d.item2}\n`;
+  t+=`= ${d.unitPrice1} ${d.currency} / ${d.unitPrice2} ${d.currency}\n`;
+  t+=`(currency cancels)\n`;
+  t+=`= ${d.r1} : ${d.r2}\n\n`;
+
+  t+=`Therefore, the required ratio is ${d.r1}:${d.r2}.`;
+
+  stepsEl.textContent = t;
+}
+
+// ---------------- KEY HANDLER ----------------
+window.addEventListener("keydown", e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){ reveal(); }
+  else{
+    if(k==="y") newProblem();
+    else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>
