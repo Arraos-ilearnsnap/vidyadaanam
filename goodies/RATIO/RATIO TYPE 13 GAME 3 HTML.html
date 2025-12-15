@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion Verification</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:950px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 12px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:17px;
+    line-height:1.6;
+    margin-top:16px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:12px;
+    font-size:13px;
+    color:#666;
+  }
+  table{
+    border-collapse:collapse;
+    margin:12px 0;
+  }
+  td,th{
+    border:1px solid #000;
+    padding:6px 12px;
+    text-align:center;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div id="tableBox"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+const CONTEXTS = [
+  ["Following are the car parking charges near a railway station. Check whether the parking charges are in direct proportion to the parking time.","hours","₹","Parking time","Parking charges"],
+  ["The following table shows the wages earned for different numbers of hours worked. Check whether wages are in direct proportion to hours worked.","hours","₹","Hours worked","Wages earned"],
+  ["The rent paid for different numbers of days is given below. Check whether the rent is in direct proportion to the number of days.","days","₹","Number of days","Rent paid"],
+  ["The taxi fare for different distances travelled is given. Check whether the taxi fare is directly proportional to the distance travelled.","km","₹","Distance travelled","Taxi fare"],
+  ["The electricity bill corresponding to different numbers of units consumed is given below. Check whether the electricity bill is directly proportional to the units consumed.","units","₹","Units consumed","Electricity bill"],
+  ["The distance travelled in different durations at a constant speed is shown. Check whether distance is directly proportional to time.","hours","km","Time taken","Distance travelled"],
+  ["The cost of cloth for different lengths is given below. Check whether the cost of cloth is directly proportional to its length.","metres","₹","Length of cloth","Cost of cloth"],
+  ["The weight of a uniform rope corresponding to different lengths is given. Check whether the weight of the rope is directly proportional to its length.","metres","kg","Length of rope","Weight of rope"],
+  ["The number of steps taken and the corresponding distance covered are given. Check whether the distance covered is directly proportional to the number of steps.","steps","metres","Number of steps","Distance covered"],
+  ["The heights of objects and the lengths of their shadows at the same time of the day are given. Check whether the length of the shadow is directly proportional to the height of the object.","cm","cm","Height of object","Length of shadow"],
+  ["The total weight corresponding to different numbers of bricks is given. Check whether the total weight is directly proportional to the number of bricks.","bricks","kg","Number of bricks","Total weight"],
+  ["The cost of rice for different quantities is given below. Check whether the cost of rice is directly proportional to the quantity purchased.","kg","₹","Quantity of rice","Cost of rice"],
+  ["The price paid for different quantities of milk is shown. Check whether the price is directly proportional to the quantity of milk.","litres","₹","Quantity of milk","Price paid"],
+  ["The total cost of notebooks for different numbers of notebooks is given. Check whether the cost is directly proportional to the number of notebooks.","notebooks","₹","Number of notebooks","Total cost"],
+  ["The resistance of a uniform wire for different lengths is given. Check whether the resistance is directly proportional to the length of the wire.","metres","ohms","Length of wire","Resistance"],
+  ["The amount of work done by different numbers of workers in a fixed time is given. Check whether the work done is directly proportional to the number of workers.","workers","units of work","Number of workers","Work done"],
+  ["The number of machines and the corresponding output produced are given. Check whether the output is directly proportional to the number of machines.","machines","items","Number of machines","Output produced"],
+  ["The number of bottles filled in different durations by the same machine is given. Check whether the number of bottles filled is directly proportional to time.","hours","bottles","Time taken","Bottles filled"],
+  ["The amount of ink used for printing different numbers of pages is given. Check whether ink used is directly proportional to the number of pages printed.","pages","ml","Pages printed","Ink used"],
+  ["The number of tiles used and the corresponding area covered are given. Check whether the area covered is directly proportional to the number of tiles used.","tiles","sq m","Number of tiles","Area covered"],
+  ["The volume of a substance corresponding to different masses (with constant density) is given. Check whether the volume is directly proportional to the mass.","kg","litres","Mass of substance","Volume of substance"],
+  ["The total mass corresponding to different numbers of particles is given. Check whether the total mass is directly proportional to the number of particles.","particles","grams","Number of particles","Total mass"],
+  ["The extension of a spring for different applied loads is given. Check whether the extension is directly proportional to the load applied.","cm","N","Load applied","Extension of spring"],
+  ["The heat produced in a conductor for different values of current (keeping resistance and time constant) is given. Check whether heat produced is directly proportional to the current.","A","J","Current","Heat produced"],
+  ["The distance travelled for different quantities of fuel consumed is given. Check whether the distance travelled is directly proportional to the fuel consumed.","litres","km","Fuel consumed","Distance travelled"],
+  ["The total cost of pens for different numbers of pens is given. Check whether the cost is directly proportional to the number of pens.","pens","₹","Number of pens","Total cost"],
+  ["The number of pages read in different durations is given. Check whether the number of pages read is directly proportional to the time spent.","minutes","pages","Time spent","Pages read"],
+  ["The area covered using different quantities of paint is given. Check whether the area covered is directly proportional to the quantity of paint used.","litres","sq m","Paint volume","Area covered"],
+  ["The amount of paper used for printing different numbers of copies is given. Check whether paper used is directly proportional to the number of copies printed.","copies","sheets","Copies printed","Paper used"],
+  ["The number of sugar crystals present in different masses of sugar is given. Check whether the number of crystals is directly proportional to the mass of sugar.","crystals","grams","Mass of sugar","Number of crystals"]
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+let stage="question";
+let DATA=null;
+
+const qEl=document.getElementById("qText");
+const tableBox=document.getElementById("tableBox");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+function generateTable(){
+  const k=r(2,7), rows=r(4,7), start=r(2,4);
+  let pairs=[];
+  for(let i=0;i<rows;i++){
+    let x=start+i;
+    pairs.push([x,x*k]);
+  }
+  return {pairs,k};
+}
+
+function renderQuestion(){
+  const ctx=CONTEXTS[r(0,CONTEXTS.length-1)];
+  const data=generateTable();
+  DATA={ctx,data};
+
+  qEl.textContent=ctx[0];
+
+  let html="<table>";
+  html+=`<tr><th>${ctx[3]}</th>`;
+  data.pairs.forEach(p=>html+=`<td>${p[0]} ${ctx[1]}</td>`);
+  html+="</tr>";
+  html+=`<tr><th>${ctx[4]}</th>`;
+  data.pairs.forEach(p=>html+=`<td>${p[1]} ${ctx[2]}</td>`);
+  html+="</tr></table>";
+
+  tableBox.innerHTML=html;
+}
+
+function revealSolution(){
+  const {ctx,data}=DATA;
+  let t="";
+
+  t+="Step 1 — Condition for direct proportion\n";
+  t+=`${ctx[4]} and ${ctx[3]} are in direct proportion if\n`;
+  t+=`${ctx[4]} / ${ctx[3]} = k (constant)\n\n`;
+
+  t+="Step 2 — Find ratios\n\n";
+
+  let constants=[];
+  data.pairs.forEach((p,i)=>{
+    let x=p[0],y=p[1];
+    t+=`(${y} ${ctx[2]}) / (${x} ${ctx[1]}) = ${y}/${x}`;
+    [2,3,5,7].forEach(f=>{
+      while(y%f===0 && x%f===0){
+        y/=f;x/=f;
+        t+=` = ${y}/${x}`;
+      }
+    });
+    constants.push(`${y}/${x}`);
+    t+=` = k${i+1}\n`;
+  });
+
+  t+="\nStep 3 — Compare constants\n";
+  t+=constants.map((_,i)=>`k${i+1}`).join(" = ");
+  t+=` = ${constants[0]}\n\n`;
+
+  t+="Step 4 — Conclusion\n";
+  t+=`Since the value of ${ctx[4]} / ${ctx[3]} is the same for all observations,\n`;
+  t+=`${ctx[4].toLowerCase()} ∝ ${ctx[3].toLowerCase()}.\n`;
+  t+=`Hence, the given quantities are directly proportional.\n`;
+
+  stepsEl.textContent=t;
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+}
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+
+  if(stage==="question"){
+    revealSolution();
+    stage="answer";
+  }else{
+    if(k==="y"){
+      stepsEl.classList.add("hidden");
+      prompt.textContent="Press any key to reveal the solution…";
+      renderQuestion();
+      stage="question";
+    }
+    if(k==="n"){
+      document.getElementById("card").innerHTML=
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>

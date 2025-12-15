@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inverse Proportion Verification</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:950px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 12px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:17px;
+    line-height:1.6;
+    margin-top:16px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:12px;
+    font-size:13px;
+    color:#666;
+  }
+  table{
+    border-collapse:collapse;
+    margin:12px 0;
+  }
+  td,th{
+    border:1px solid #000;
+    padding:6px 12px;
+    text-align:center;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Inverse Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div id="tableBox"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// --------------------------------------------------
+// INVERSE PROPORTION CONTEXTS
+// [question, unitX, unitY, headingX, headingY]
+// --------------------------------------------------
+const CONTEXTS = [
+
+  // -------- ORIGINAL 30 (UNCHANGED) --------
+  ["The number of workers required to complete a job in different numbers of days is given. Check whether workers and days are inversely proportional.","workers","days","Number of workers","Number of days"],
+  ["The speed of a vehicle and the time taken to cover a fixed distance are given. Check whether speed and time are inversely proportional.","km/h","hours","Speed","Time taken"],
+  ["The number of taps used and the time taken to fill a tank are given. Check whether taps and time are inversely proportional.","taps","hours","Number of taps","Time taken"],
+  ["The number of machines and the time taken to complete a task are given. Check whether machines and time are inversely proportional.","machines","hours","Number of machines","Time taken"],
+  ["The number of men and the number of days required to do a piece of work are given. Check whether men and days are inversely proportional.","men","days","Number of men","Number of days"],
+  ["The speed of a train and the time taken to travel a fixed distance are given. Check whether speed and time are inversely proportional.","km/h","hours","Speed","Time taken"],
+  ["The number of workers and the time taken to paint a wall are given. Check whether workers and time are inversely proportional.","workers","hours","Number of workers","Time taken"],
+  ["The number of pumps used and the time taken to empty a tank are given. Check whether pumps and time are inversely proportional.","pumps","hours","Number of pumps","Time taken"],
+  ["The number of labourers and the time taken to dig a pit are given. Check whether labourers and time are inversely proportional.","labourers","days","Number of labourers","Number of days"],
+  ["The speed of a cyclist and the time taken to complete a race are given. Check whether speed and time are inversely proportional.","km/h","minutes","Speed","Time taken"],
+  ["The number of workers and the time required to harvest a field are given. Check whether workers and time are inversely proportional.","workers","days","Number of workers","Number of days"],
+  ["The speed of a car and the time taken to reach a destination are given. Check whether speed and time are inversely proportional.","km/h","hours","Speed","Time taken"],
+  ["The number of pipes and the time taken to fill a reservoir are given. Check whether pipes and time are inversely proportional.","pipes","hours","Number of pipes","Time taken"],
+  ["The number of people sharing food and the number of days the food lasts are given. Check whether people and days are inversely proportional.","people","days","Number of people","Number of days"],
+  ["The speed of a boat and the time taken to cross a river are given. Check whether speed and time are inversely proportional.","m/s","seconds","Speed","Time taken"],
+  ["The number of workers and the time taken to build a wall are given. Check whether workers and time are inversely proportional.","workers","days","Number of workers","Number of days"],
+  ["The speed of a machine and the time taken to manufacture an item are given. Check whether speed and time are inversely proportional.","units/hour","hours","Speed of machine","Time taken"],
+  ["The number of printers and the time taken to print a book are given. Check whether printers and time are inversely proportional.","printers","hours","Number of printers","Time taken"],
+  ["The number of labourers and the time taken to lay tiles are given. Check whether labourers and time are inversely proportional.","labourers","hours","Number of labourers","Time taken"],
+  ["The speed of typing and the time taken to type a document are given. Check whether speed and time are inversely proportional.","words/min","minutes","Typing speed","Time taken"],
+  ["The number of engines and the time taken to lift a load are given. Check whether engines and time are inversely proportional.","engines","minutes","Number of engines","Time taken"],
+  ["The speed of water flow and the time taken to fill a container are given. Check whether speed and time are inversely proportional.","litres/min","minutes","Flow rate","Time taken"],
+  ["The number of workers and the time taken to clean a hall are given. Check whether workers and time are inversely proportional.","workers","hours","Number of workers","Time taken"],
+  ["The speed of a fan and the time taken to cool a room are given. Check whether speed and time are inversely proportional.","rpm","minutes","Fan speed","Time taken"],
+  ["The number of cooks and the time taken to prepare food are given. Check whether cooks and time are inversely proportional.","cooks","hours","Number of cooks","Time taken"],
+  ["The speed of an escalator and the time taken to reach the top are given. Check whether speed and time are inversely proportional.","steps/min","minutes","Speed","Time taken"],
+  ["The number of workers and the time taken to load goods are given. Check whether workers and time are inversely proportional.","workers","hours","Number of workers","Time taken"],
+  ["The speed of an internet connection and the time taken to download a file are given. Check whether speed and time are inversely proportional.","Mbps","minutes","Download speed","Time taken"],
+  ["The number of taps opened and the time taken to drain water are given. Check whether taps and time are inversely proportional.","taps","minutes","Number of taps","Time taken"],
+  ["The number of machines and the time taken to assemble products are given. Check whether machines and time are inversely proportional.","machines","hours","Number of machines","Time taken"],
+
+  // -------- ADDED UNIQUE INVERSE RELATIONS --------
+  ["The pressure of a gas and its volume at constant temperature are given. Check whether pressure is inversely proportional to volume.","kPa","litres","Pressure of gas","Volume of gas"],
+  ["The density of a substance and its volume for a fixed mass are given. Check whether density is inversely proportional to volume.","kg/m³","m³","Density","Volume"],
+  ["The number of people sharing a fixed total cost and the cost per person are given. Check whether cost per person is inversely proportional to the number of people.","people","₹","Number of people","Cost per person"],
+  ["The resistance of a circuit and the electric current flowing through it at constant voltage are given. Check whether current is inversely proportional to resistance.","ohms","ampere","Resistance","Current"],
+  ["The number of identical resistors connected in parallel and the equivalent resistance are given. Check whether equivalent resistance is inversely proportional to the number of resistors.","resistors","ohms","Number of resistors","Equivalent resistance"],
+  ["The frequency of a wave and its wavelength for a fixed wave speed are given. Check whether frequency is inversely proportional to wavelength.","Hz","m","Frequency","Wavelength"],
+  ["The time period of a wave and its frequency are given. Check whether time period is inversely proportional to frequency.","seconds","Hz","Time period","Frequency"],
+  ["The efficiency of a machine and the time taken to produce a fixed output are given. Check whether time taken is inversely proportional to efficiency.","%","hours","Efficiency","Time taken"],
+  ["The number of gear teeth on a wheel and its rotational speed are given. Check whether rotational speed is inversely proportional to the number of teeth.","teeth","rpm","Number of teeth","Rotational speed"],
+  ["The magnification of a microscope and the field of view observed are given. Check whether field of view is inversely proportional to magnification.","×","mm","Magnification","Field of view"],
+  ["The concentration of a solution and its volume for a fixed amount of solute are given. Check whether concentration is inversely proportional to volume.","mol/L","litres","Concentration","Volume"],
+  ["The number of toll booths operating and the waiting time at a toll plaza are given. Check whether waiting time is inversely proportional to the number of booths.","booths","minutes","Number of booths","Waiting time"]
+
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+let stage="question";
+let DATA=null;
+
+const qEl=document.getElementById("qText");
+const tableBox=document.getElementById("tableBox");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// --------------------------------------------------
+function generateTable(){
+  const k=r(24,120);
+  const rows=r(2,7);
+  let pairs=[];
+
+  for(let x=2;x<=k && pairs.length<rows*2;x++){
+    if(k%x===0){
+      let y=k/x;
+      if(x!==y) pairs.push([x,y]);
+    }
+  }
+
+  pairs.sort(()=>Math.random()-0.5);
+  pairs=pairs.slice(0,rows);
+
+  if(pairs.length<2){
+    pairs=[[2,k/2],[k/2,2]];
+  }
+
+  return {pairs,k};
+}
+
+// --------------------------------------------------
+function renderQuestion(){
+  const ctx=CONTEXTS[r(0,CONTEXTS.length-1)];
+  const data=generateTable();
+  DATA={ctx,data};
+
+  qEl.textContent=ctx[0];
+
+  let html="<table><tr><th>"+ctx[3]+"</th>";
+  data.pairs.forEach(p=>html+=`<td>${p[0]} ${ctx[1]}</td>`);
+  html+="</tr><tr><th>"+ctx[4]+"</th>";
+  data.pairs.forEach(p=>html+=`<td>${p[1]} ${ctx[2]}</td>`);
+  html+="</tr></table>";
+
+  tableBox.innerHTML=html;
+}
+
+// --------------------------------------------------
+function revealSolution(){
+  const {ctx,data}=DATA;
+  let t="";
+
+  t+="Step 1 — Condition for inverse proportion\n";
+  t+=`${ctx[3]} and ${ctx[4]} are inversely proportional if\n`;
+  t+=`${ctx[3]} × ${ctx[4]} = k (constant)\n\n`;
+
+  t+="Step 2 — Find products\n\n";
+
+  data.pairs.forEach((p,i)=>{
+    t+=`${p[0]} × ${p[1]} = ${p[0]*p[1]} = k${i+1}\n`;
+  });
+
+  t+="\nStep 3 — Compare constants\n";
+  t+=data.pairs.map((_,i)=>`k${i+1}`).join(" = ");
+  t+=` = ${data.k}\n\n`;
+
+  t+="Step 4 — Conclusion\n";
+  t+="Since the value of the product is the same for all observations,\n";
+  t+=`${ctx[3].toLowerCase()} ∝ 1/${ctx[4].toLowerCase()}.\n`;
+  t+="Hence, the given quantities are inversely proportional.\n";
+
+  stepsEl.textContent=t;
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+}
+
+// --------------------------------------------------
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){
+    revealSolution();stage="answer";
+  }else{
+    if(k==="y"){stepsEl.classList.add("hidden");prompt.textContent="Press any key to reveal the solution…";renderQuestion();stage="question";}
+    if(k==="n"){document.getElementById("card").innerHTML='<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';}
+  }
+});
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Missing Values</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:24px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 12px;font-weight:700;}
+.question{font-size:20px;color:#0b59c6;font-weight:700;margin-bottom:10px;}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{white-space:pre-line;font-size:17px;line-height:1.6;margin-top:16px;}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+table{border-collapse:collapse;margin:12px 0;}
+td,th{border:1px solid #000;padding:6px 12px;text-align:center;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+<div class="card" id="card">
+<h1>Direct Proportion</h1>
+<div class="question" id="qText"></div>
+<div id="tableBox"></div>
+<div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+<div class="steps hidden" id="stepsBox"></div>
+<div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+</div>
+</div>
+
+<script>
+(function(){
+
+// ------------------------------------------------------------------
+// Question-2-style DIRECT proportion contexts
+// [intro, unitX, unitY, headingX, headingY]
+// ------------------------------------------------------------------
+const CONTEXTS = [
+  ["In the following table showing parking time, find the corresponding parking charges assuming they are directly proportional.","hours","₹","Parking time","Parking charges"],
+  ["In the following table of hours worked, find the wages earned assuming direct proportion.","hours","₹","Hours worked","Wages earned"],
+  ["In the following table, find the rent paid for the given number of days assuming rent varies directly with days.","days","₹","Number of days","Rent paid"],
+  ["In the following table of distances travelled, find the taxi fare assuming direct proportionality.","km","₹","Distance travelled","Taxi fare"],
+  ["In the following table, find the electricity bill for the given units consumed assuming direct proportion.","units","₹","Units consumed","Electricity bill"],
+  ["In the following table of time taken, find the distance travelled assuming constant speed.","hours","km","Time taken","Distance travelled"],
+  ["In the following table, find the cost of cloth for the given lengths assuming direct proportion.","metres","₹","Length of cloth","Cost of cloth"],
+  ["In the following table of rope lengths, find the corresponding weights assuming uniform density.","metres","kg","Length of rope","Weight of rope"],
+  ["In the following table, find the distance covered for the given number of steps assuming direct proportion.","steps","metres","Number of steps","Distance covered"],
+  ["In the following table of object heights, find the corresponding shadow lengths assuming the same time of day.","cm","cm","Height of object","Length of shadow"],
+  ["In the following table, find the total weight for the given number of bricks assuming uniform bricks.","bricks","kg","Number of bricks","Total weight"],
+  ["In the following table of quantities of rice, find the corresponding cost assuming direct proportion.","kg","₹","Quantity of rice","Cost of rice"],
+  ["In the following table, find the price paid for the given quantities of milk assuming direct proportion.","litres","₹","Quantity of milk","Price paid"],
+  ["In the following table of notebooks purchased, find the total cost assuming direct proportion.","notebooks","₹","Number of notebooks","Total cost"],
+  ["In the following table, find the resistance of the wire for the given lengths assuming uniform wire.","metres","ohms","Length of wire","Resistance"],
+  ["In the following table of number of workers, find the work done in fixed time assuming direct proportion.","workers","units of work","Number of workers","Work done"],
+  ["In the following table, find the output produced for the given number of machines assuming direct proportion.","machines","items","Number of machines","Output produced"],
+  ["In the following table of time taken, find the number of bottles filled assuming the same machine.","hours","bottles","Time taken","Bottles filled"],
+  ["In the following table, find the amount of ink used for the given number of pages printed.","pages","ml","Pages printed","Ink used"],
+  ["In the following table of number of tiles used, find the area covered assuming uniform tiles.","tiles","sq m","Number of tiles","Area covered"],
+  ["In the following table, find the volume of the substance for the given masses assuming constant density.","kg","litres","Mass of substance","Volume of substance"],
+  ["In the following table of number of particles, find the total mass assuming identical particles.","particles","grams","Number of particles","Total mass"],
+  ["In the following table, find the extension of the spring for the given applied loads.","cm","N","Load applied","Extension of spring"],
+  ["In the following table of current values, find the heat produced assuming resistance and time are constant.","A","J","Current","Heat produced"],
+  ["In the following table, find the distance travelled for the given quantities of fuel consumed.","litres","km","Fuel consumed","Distance travelled"],
+  ["In the following table of number of pens, find the total cost assuming direct proportion.","pens","₹","Number of pens","Total cost"],
+  ["In the following table, find the number of pages read for the given time durations.","minutes","pages","Time spent","Pages read"],
+  ["In the following table of paint quantities, find the area covered assuming uniform coverage.","litres","sq m","Paint volume","Area covered"],
+  ["In the following table, find the amount of paper used for the given number of copies printed.","copies","sheets","Copies printed","Paper used"],
+  ["In the following table of masses of sugar, find the number of sugar crystals assuming uniform composition.","crystals","grams","Mass of sugar","Number of crystals"]
+];
+
+// --------------------------------------------------
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+let stage="question", DATA=null;
+const qEl=document.getElementById("qText");
+const tableBox=document.getElementById("tableBox");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// --------------------------------------------------
+// ✅ FIXED: random X values < 25 (first fixed as 1)
+// --------------------------------------------------
+function generateTable(){
+  const k = r(2,9);
+  const xs = new Set([1]);
+
+  while(xs.size < 5){
+    xs.add(r(2,24));
+  }
+
+  const arr = Array.from(xs);
+  return { k, pairs: arr.map(x => [x, x * k]) };
+}
+
+// --------------------------------------------------
+function renderQuestion(){
+  const ctx=CONTEXTS[r(0,CONTEXTS.length-1)];
+  const data=generateTable();
+  DATA={ctx,data};
+
+  qEl.textContent=ctx[0];
+
+  let html="<table><tr><th>"+ctx[3]+"</th>";
+  data.pairs.forEach(p=>html+=`<td>${p[0]} ${ctx[1]}</td>`);
+  html+="</tr><tr><th>"+ctx[4]+"</th>";
+  data.pairs.forEach((p,i)=>html+=i===0?`<td>${p[1]} ${ctx[2]}</td>`:`<td>…</td>`);
+  html+="</tr></table>";
+
+  tableBox.innerHTML=html;
+}
+
+// --------------------------------------------------
+function revealSolution(){
+  const {ctx,data}=DATA;
+  let t="";
+
+  t+="Step 1 — Condition for direct proportion\n";
+  t+=`${ctx[4]} and ${ctx[3]} are in direct proportion if\n`;
+  t+=`${ctx[4]} / ${ctx[3]} = k (constant)\n\n`;
+
+  t+="Step 2 — Find the constant of proportionality\n\n";
+  t+=`k = ${data.pairs[0][1]} / ${data.pairs[0][0]} = ${data.k}\n\n`;
+
+  t+="Step 3 — Find the missing values\n\n";
+  data.pairs.slice(1).forEach(p=>{
+    t+=`${p[0]} × ${data.k} = ${p[1]} ${ctx[2]}\n`;
+  });
+
+  t+="\nStep 4 — Conclusion\n";
+  t+=`${ctx[4].toLowerCase()} ∝ ${ctx[3].toLowerCase()}.\n`;
+  t+="Hence, the given quantities are directly proportional.\n";
+
+  stepsEl.textContent=t;
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+}
+
+// --------------------------------------------------
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){revealSolution();stage="answer";}
+  else if(k==="y"){stepsEl.classList.add("hidden");renderQuestion();stage="question";}
+  else if(k==="n"){document.getElementById("card").innerHTML='<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';}
+});
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>

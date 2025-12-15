@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Finding Antecedent</title>
+
+<style>
+  body{
+    margin:0;
+    font-family:Segoe UI,Roboto,Arial,sans-serif;
+    background:#fff;
+    color:#111;
+  }
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .card{
+    width:100%;
+    max-width:900px;
+    background:#fff;
+    padding:24px;
+    border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  }
+  h1{
+    font-size:16px;
+    margin:0 0 10px;
+    font-weight:700;
+  }
+  .question{
+    font-size:20px;
+    color:#0b59c6;
+    font-weight:700;
+    margin:12px 0;
+    line-height: 1.4;
+  }
+  .prompt{
+    font-size:13px;
+    color:#666;
+    font-style:italic;
+  }
+  .steps{
+    white-space:pre-line;
+    font-size:18px;
+    line-height:1.6;
+    margin-top:14px;
+  }
+  .hidden{display:none;}
+  .foot{
+    margin-top:10px;
+    font-size:13px;
+    color:#666;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+// --------------------------------------------------
+// Scenarios with Natural Phrasing
+// u1: Unit for Answer (Antecedent)
+// u2: Unit for Given (Consequent)
+// text: The noun/subject
+// verb: The connecting action (costs, weighs, requires)
+// --------------------------------------------------
+const SCENARIOS = [
+  { u1: "hours", u2: "₹", text: "parking", verb: "costs" },
+  { u1: "hours", u2: "₹", text: "work", verb: "earns" },
+  { u1: "days", u2: "₹", text: "rent", verb: "costs" },
+  { u1: "km", u2: "₹", text: "taxi travel", verb: "costs" },
+  { u1: "units", u2: "₹", text: "electricity", verb: "costs" },
+  { u1: "hours", u2: "km", text: "travel", verb: "covers" },
+  { u1: "metres", u2: "₹", text: "cloth", verb: "costs" },
+  { u1: "metres", u2: "kg", text: "rope", verb: "weighs" },
+  { u1: "steps", u2: "metres", text: "walking", verb: "covers" },
+  { u1: "cm", u2: "cm", text: "object height", verb: "casts a shadow of" },
+  { u1: "bricks", u2: "kg", text: "load", verb: "weighs" },
+  { u1: "kg", u2: "₹", text: "rice", verb: "costs" },
+  { u1: "litres", u2: "₹", text: "milk", verb: "costs" },
+  { u1: "notebooks", u2: "₹", text: "bundle", verb: "costs" },
+  { u1: "metres", u2: "ohms", text: "wire", verb: "has a resistance of" },
+  { u1: "workers", u2: "units", text: "workforce", verb: "produces" },
+  { u1: "machines", u2: "items", text: "assembly line", verb: "produces" },
+  { u1: "hours", u2: "bottles", text: "machine operation", verb: "fills" },
+  { u1: "pages", u2: "ml", text: "printing", verb: "consumes" },
+  { u1: "tiles", u2: "sq m", text: "flooring", verb: "covers" },
+  { u1: "kg", u2: "litres", text: "substance", verb: "occupies" },
+  { u1: "particles", u2: "grams", text: "sample", verb: "weighs" },
+  { u1: "cm", u2: "N", text: "spring extension", verb: "requires a load of" },
+  { u1: "A", u2: "J", text: "current", verb: "produces heat of" },
+  { u1: "litres", u2: "km", text: "fuel", verb: "allows driving for" },
+  { u1: "pens", u2: "₹", text: "set of pens", verb: "costs" },
+  { u1: "minutes", u2: "pages", text: "reading", verb: "covers" },
+  { u1: "litres", u2: "sq m", text: "paint", verb: "covers" },
+  { u1: "copies", u2: "sheets", text: "print job", verb: "uses" },
+  { u1: "crystals", u2: "grams", text: "sugar", verb: "weighs" }
+];
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+// --------------------------------------------------
+// Generate Problem
+// --------------------------------------------------
+function generateProblem(){
+  const s = SCENARIOS[r(0, SCENARIOS.length-1)];
+  
+  // A (Answer Unit) is small, B (Given Unit) is larger
+  const A = r(2, 9); 
+  const B = r(15, 95); 
+
+  // Multiplier determines the target numbers
+  const multiplier = r(3, 12);
+
+  const consequent = B * multiplier; // The "Given" in the question
+  const antecedent = A * multiplier; // The "Answer"
+
+  // Smoother Question Construction
+  // Ex: "If 2 hours of parking costs 50 ₹, how many hours of parking can be had for 200 ₹?"
+  const question = `If ${A} ${s.u1} of ${s.text} ${s.verb} ${B} ${s.u2}, how much ${s.text} (${s.u1}) corresponds to ${consequent} ${s.u2}?`;
+
+  return { 
+    A, B, consequent, antecedent, multiplier, question, unit1: s.u1
+  };
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  stepsEl.textContent="";
+  prompt.textContent="Press any key to reveal the solution…";
+
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+// --------------------------------------------------
+// Reveal Solution
+// --------------------------------------------------
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {A, B, consequent, antecedent, multiplier, unit1} = DATA;
+
+  let t="";
+
+  t+=`Writing ratio in simplest form as a fraction,\n`;
+  t+=`${A}/${B}  … (1)\n\n`;
+
+  t+=`Writing equivalent ratio with unknown antecedent,\n`;
+  t+=`x/${consequent}  … (2)\n\n`;
+
+  t+=`Equating (1) and (2) to find x,\n`;
+  t+=`${A}/${B} = x/${consequent}\n\n`;
+
+  // --- CHANGED LOGIC HERE ---
+  // Moving denominator to LHS: (A/B) * Consequent = x
+  t+=`Sending the denominator to LHS,\n`;
+  t+=`${A}/${B} × ${consequent} = x\n\n`;
+
+  // Showing the cancellation result
+  // Since consequent = B * multiplier, consequent/B = multiplier
+  t+=`⇒ ${A} × ${multiplier} = x\n\n`;
+
+  t+=`∴ x = ${antecedent}\n\n`;
+
+  t+=`The value is ${antecedent} ${unit1}.`;
+
+  stepsEl.textContent = t;
+}
+
+// --------------------------------------------------
+// Handlers
+// --------------------------------------------------
+window.addEventListener("keydown", e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question"){ reveal(); }
+  else{
+    if(k==="y") newProblem();
+    else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>
