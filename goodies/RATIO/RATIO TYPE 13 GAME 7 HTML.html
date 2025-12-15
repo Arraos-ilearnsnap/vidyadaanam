@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Magnification – Direct Proportion</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+.question{
+  font-size:20px;
+  color:#0b59c6;
+  font-weight:700;
+  line-height:1.45;
+  margin:12px 0;
+}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{
+  white-space:pre-line;
+  font-size:18px;
+  line-height:1.65;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Magnification</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+const ORGANISMS=[
+  "microorganism","virus particle","cell specimen","pollen grain",
+  "amoeba","protozoan","microscopic organism","cell structure","biological sample"
+];
+
+const VARIANTS=[
+(org,M1,L,M2)=>`A microscopic organism is photographed at a magnification of ${M1.toLocaleString()}×, resulting in an image ${L} cm long.
+(a) Find the actual length of the ${org}.
+(b) What will be the image length if the magnification is reduced to ${M2.toLocaleString()}×?`,
+
+(org,M1,L,M2)=>`In a laboratory experiment, a ${org} appears ${L} cm long when viewed under a microscope with a magnification of ${M1.toLocaleString()} times.
+Determine the real length of the specimen.
+If the magnification is changed to ${M2.toLocaleString()} times, find the new image length.`,
+
+(org,M1,L,M2)=>`A photograph enlarges a ${org} ${M1.toLocaleString()} times, producing an image ${L} cm in length.
+Calculate the true size of the ${org}.
+How long would the image be if the magnification were only ${M2.toLocaleString()} times?`
+];
+
+let DATA=null,stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+function generateProblem(){
+  const organism=ORGANISMS[r(0,ORGANISMS.length-1)];
+  const M1=r(2,9)*Math.pow(10,r(4,5));
+  const L=r(1,9);
+  let M2;
+  do{M2=r(2,9)*Math.pow(10,r(4,5));}while(M2>=M1);
+  const question=VARIANTS[r(0,VARIANTS.length-1)](organism,M1,L,M2);
+  return {organism,M1,L,M2,question};
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA=generateProblem();
+  qEl.textContent=DATA.question;
+}
+
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {organism,M1,L,M2}=DATA;
+
+  let t="";
+
+  /* -------- PART (a) -------- */
+
+  t+="Magnification  →  Size\n";
+  t+=`${M1.toLocaleString()}  →  ${L} cm\n`;
+  t+=`1  →  x cm\n\n`;
+
+  t+="Cross multiplying,\n";
+  t+=`${M1} × x = ${L} × 1\n\n`;
+  t+=`${M1}x = ${L}\n\n`;
+  t+=`x = ${L} / ${M1}\n\n`;
+
+  const denom=M1/L;
+  const power=Math.floor(Math.log10(denom));
+  const coeff=(1/(denom/Math.pow(10,power))).toFixed(3);
+
+  t+=`x = ${coeff} × 10⁻${power} cm\n\n`;
+  t+=`The actual length of the ${organism} is ${coeff} × 10⁻${power} cm.\n\n`;
+
+  /* -------- PART (b) — FULL MULTIPLICATION, NO EARLY ROUNDING -------- */
+
+  t+="Part (b):\n\n";
+  t+="Magnification  →  Size\n";
+  t+=`1  →  ${coeff} × 10⁻${power} cm\n`;
+  t+=`${M2.toLocaleString()}  →  ${M2} × ${coeff} × 10⁻${power} cm\n\n`;
+
+  const rawProduct = M2 * coeff;
+  const scientific = rawProduct * Math.pow(10, -power);
+
+  t+=`${rawProduct.toFixed(0)} × 10⁻${power} cm\n`;
+  t+=`= ${scientific.toFixed(4)} cm\n\n`;
+
+  t+=`The enlarged length of the ${organism} will be ${scientific.toFixed(2)} cm.`;
+
+  stepsEl.textContent=t;
+}
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question")reveal();
+  else if(k==="y")newProblem();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML=
+    '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>

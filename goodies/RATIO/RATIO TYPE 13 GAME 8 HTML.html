@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Scale Problems</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+.question{
+  font-size:20px;
+  color:#0b59c6;
+  font-weight:700;
+  line-height:1.45;
+  margin:12px 0;
+}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{
+  white-space:pre-line;
+  font-size:18px;
+  line-height:1.65;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+/* ---------- DATA POOLS ---------- */
+
+// Model–actual objects and parts
+const OBJECTS = [
+  {obj:"ship", part:"mast"},
+  {obj:"tower", part:"spire"},
+  {obj:"factory chimney", part:"chimney"},
+  {obj:"temple", part:"flagpole"},
+  {obj:"lighthouse", part:"beacon pole"}
+];
+
+// Indian Hindu girl names
+const NAMES = [
+  "Rashmi","Ananya","Kavya","Meera","Sita","Pooja","Aarti","Nandini","Shreya"
+];
+
+// Question variants
+const VARIANTS = {
+  model: [
+    (o,p,mp,ap,al)=>`In a scale model of a ${o}, the ${p} measures ${mp} cm, while the ${p} of the actual ${o} is ${ap} m high.
+If the actual ${o} is ${al} m long, find the length of the model.`,
+
+    (o,p,mp,ap,al)=>`A model ${o} has its ${p} ${mp} cm tall. The real ${o} has a ${p} height of ${ap} m.
+Given that the actual ${o} is ${al} m long, determine the length of the model.`,
+
+    (o,p,mp,ap,al)=>`The ${p} of a model ${o} is ${mp} cm high, corresponding to ${ap} m in the real ${o}.
+If the real ${o} has a length of ${al} m, calculate the model’s length.`
+  ],
+
+  map: [
+    (n,s,d)=>`${n} uses a road map where 1 cm represents ${s} km.
+If she travels ${d} km, what distance does this represent on the map?`,
+
+    (n,s,d)=>`On a map, the scale is 1 cm : ${s} km.
+If ${n} covers a distance of ${d} km, find the distance shown on the map.`,
+
+    (n,s,d)=>`${n} drives ${d} km using a map drawn to the scale 1 cm for ${s} km.
+How many centimetres represent this distance on the map?`
+  ]
+};
+
+/* ---------- STATE ---------- */
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+/* ---------- GENERATION ---------- */
+
+function generateProblem(){
+  if(Math.random()<0.5){
+    // Model problem
+    const o = OBJECTS[r(0,OBJECTS.length-1)];
+    const mp = r(5,12);           // cm
+    const ap = r(8,20);           // m
+    const al = r(20,60);          // m
+
+    const variant = VARIANTS.model[r(0,2)];
+    const question = variant(o.obj,o.part,mp,ap,al);
+
+    return {type:"model",o,mp,ap,al,question};
+  } else {
+    // Map problem
+    const n = NAMES[r(0,NAMES.length-1)];
+    const s = r(5,25);            // km per cm
+    const d = s * r(2,6);         // km
+
+    const variant = VARIANTS.map[r(0,2)];
+    const question = variant(n,s,d);
+
+    return {type:"map",n,s,d,question};
+  }
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+/* ---------- SOLUTION ---------- */
+
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  let t="";
+
+  if(DATA.type==="model"){
+    const {o,mp,ap,al} = DATA;
+
+    t+=`Model : Actual\n`;
+    t+=`${mp} cm  →  ${ap} m\n`;
+    t+=`x cm  →  ${al} m\n\n`;
+
+    t+=`By direct proportion,\n`;
+    t+=`${mp} / ${ap} = x / ${al}\n\n`;
+
+    t+=`Cross multiplying,\n`;
+    t+=`${ap} × x = ${mp} × ${al}\n\n`;
+
+    const x = (mp*al/ap).toFixed(2);
+    t+=`x = ${x} cm\n\n`;
+    t+=`The length of the model ${o.obj} is ${x} cm.`;
+
+  } else {
+    const {n,s,d} = DATA;
+
+    t+=`Map distance : Actual distance\n`;
+    t+=`1 cm  →  ${s} km\n`;
+    t+=`x cm  →  ${d} km\n\n`;
+
+    t+=`By direct proportion,\n`;
+    t+=`1 / ${s} = x / ${d}\n\n`;
+
+    t+=`Cross multiplying,\n`;
+    t+=`${s} × x = ${d}\n\n`;
+
+    const x = (d/s).toFixed(2);
+    t+=`x = ${x} cm\n\n`;
+    t+=`${n}'s distance on the map is ${x} cm.`;
+  }
+
+  stepsEl.textContent=t;
+}
+
+/* ---------- CONTROLS ---------- */
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") reveal();
+  else if(k==="y") newProblem();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML =
+      '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>

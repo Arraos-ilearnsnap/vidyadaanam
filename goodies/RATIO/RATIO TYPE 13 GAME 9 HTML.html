@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Mass to Count</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+.question{
+  font-size:20px;
+  color:#0b59c6;
+  font-weight:700;
+  line-height:1.45;
+  margin:12px 0;
+}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{
+  white-space:pre-line;
+  font-size:18px;
+  line-height:1.65;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+/* ---------- WORD PAIRS (FIXED) ---------- */
+const ITEMS = [
+  {mass:"rice bag", unit:"kg", item:"grains"},
+  {mass:"wheat sack", unit:"kg", item:"grains"},
+  {mass:"sugar bag", unit:"kg", item:"crystals"},
+  {mass:"salt sack", unit:"kg", item:"crystals"},
+  {mass:"pulse bag", unit:"kg", item:"seeds"},
+  {mass:"sand bag", unit:"kg", item:"grains"},
+  {mass:"cement bag", unit:"kg", item:"granules"}
+];
+
+/* ---------- QUESTION VARIANTS ---------- */
+const VARIANTS = [
+  (m,u,i,m1,c,m2,m3)=>`Suppose ${m1} ${u} of ${m} contains ${c} ${i}.
+How many ${i} are there in:
+(a) ${m2} ${u} of ${m}?
+(b) ${m3} ${u} of ${m}?`,
+
+  (m,u,i,m1,c,m2,m3)=>`${c} ${i} are found in ${m1} ${u} of ${m}.
+Find the number of ${i} present in:
+(i) ${m2} ${u} of ${m}
+(ii) ${m3} ${u} of ${m}`, 
+
+  (m,u,i,m1,c,m2,m3)=>`A sample of ${m} weighing ${m1} ${u} contains ${c} ${i}.
+Determine how many ${i} would be present in ${m2} ${u} and ${m3} ${u} of ${m}.`
+];
+
+let DATA=null, stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+/* ---------- GENERATION ---------- */
+function generateProblem(){
+  const item = ITEMS[r(0,ITEMS.length-1)];
+  const baseMass = r(2,5);
+  const power = r(5,7);
+  const baseCount = r(2,9) * Math.pow(10,power);
+  const m2 = baseMass * r(2,4);
+  const m3 = Number((baseMass * (r(6,12)/10)).toFixed(1));
+
+  const question = VARIANTS[r(0,VARIANTS.length-1)](
+    item.mass,item.unit,item.item,
+    baseMass,baseCount,m2,m3
+  );
+
+  return {item,baseMass,baseCount,m2,m3,question};
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA = generateProblem();
+  qEl.textContent = DATA.question;
+}
+
+/* ---------- SOLUTION (WITH CROSS MULTIPLICATION) ---------- */
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {item,baseMass,baseCount,m2,m3} = DATA;
+
+  let t="";
+
+  t+=`Mass  →  Number of ${item.item}\n`;
+  t+=`${baseMass} ${item.unit}  →  ${baseCount}\n`;
+  t+=`1 ${item.unit}  →  x\n\n`;
+
+  t+=`By direct proportion,\n`;
+  t+=`${baseMass} / ${baseCount} = 1 / x\n\n`;
+
+  t+=`Cross multiplying,\n`;
+  t+=`${baseMass} × x = ${baseCount} × 1\n\n`;
+
+  t+=`${baseMass}x = ${baseCount}\n\n`;
+  t+=`x = ${baseCount} / ${baseMass}\n\n`;
+
+  const perKg = baseCount / baseMass;
+
+  t+=`∴ Number of ${item.item} per ${item.unit} = ${perKg}\n\n`;
+
+  const ans1 = perKg * m2;
+  const ans2 = perKg * m3;
+
+  t+=`For ${m2} ${item.unit}:\n`;
+  t+=`${m2} × ${perKg} = ${ans1}\n\n`;
+
+  t+=`For ${m3} ${item.unit}:\n`;
+  t+=`${m3} × ${perKg} = ${ans2}\n\n`;
+
+  t+=`Answer:\n`;
+  t+=`${m2} ${item.unit} contains ${ans1} ${item.item}\n`;
+  t+=`${m3} ${item.unit} contains ${ans2} ${item.item}`;
+
+  stepsEl.textContent = t;
+}
+
+/* ---------- CONTROLS ---------- */
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") reveal();
+  else if(k==="y") newProblem();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML =
+      '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>
