@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct & Inverse Proportion – Identification</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:900px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{
+  font-size:16px;
+  margin:0 0 12px;
+  font-weight:700;
+}
+.question{
+  font-size:18px;
+  margin-bottom:14px;
+  font-weight:600;
+}
+.list{
+  font-size:17px;
+  line-height:1.7;
+}
+.prompt{
+  margin-top:10px;
+  font-size:13px;
+  color:#666;
+  font-style:italic;
+}
+.answer{
+  white-space:pre-line;
+  font-size:17px;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{
+  margin-top:12px;
+  font-size:13px;
+  color:#666;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="list" id="listBox"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the answer…</div>
+    <div class="answer hidden" id="answerBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+/* -------- QUESTION STEMS -------- */
+const STEMS = [
+  "Which of the following pairs of quantities are in inverse proportion?",
+  "From the situations given below, identify those which show inverse proportion.",
+  "Select the situations where one quantity increases while the other decreases proportionally."
+];
+
+/* -------- 105 SITUATIONS (TAGGED) -------- */
+const SITUATIONS = [
+
+/* Given textbook five */
+{ text:"The number of workers on a job and the time taken to complete the job.", type:"inverse" },
+{ text:"The time taken for a journey and the distance travelled at uniform speed.", type:"direct" },
+{ text:"The area of cultivated land and the crop harvested.", type:"direct" },
+{ text:"The time taken for a fixed journey and the speed of the vehicle.", type:"inverse" },
+{ text:"The population of a country and the area of land per person.", type:"inverse" },
+
+/* Direct proportion (sampled set, extended) */
+{ text:"The number of notebooks bought and the total cost.", type:"direct" },
+{ text:"The distance travelled and the time taken at constant speed.", type:"direct" },
+{ text:"The amount of fuel used and the distance covered.", type:"direct" },
+{ text:"The number of workers and the total work done in fixed time.", type:"direct" },
+{ text:"The length of cloth and its cost.", type:"direct" },
+{ text:"The number of pages printed and the amount of ink used.", type:"direct" },
+{ text:"The mass of fruits bought and the price paid.", type:"direct" },
+{ text:"The speed of a vehicle and the distance covered in fixed time.", type:"direct" },
+{ text:"The number of days worked and wages earned.", type:"direct" },
+{ text:"The quantity of paint used and the area covered.", type:"direct" },
+
+/* Inverse proportion (sampled set, extended) */
+{ text:"The number of workers and the time taken to complete fixed work.", type:"inverse" },
+{ text:"The speed of a vehicle and the time taken to cover a fixed distance.", type:"inverse" },
+{ text:"The number of pipes and the time taken to fill a tank.", type:"inverse" },
+{ text:"The number of men working and the days required for a job.", type:"inverse" },
+{ text:"The number of taps and the time taken to empty a tank.", type:"inverse" },
+{ text:"The speed of typing and time taken to type a document.", type:"inverse" },
+{ text:"The number of machines and time taken to manufacture fixed items.", type:"inverse" },
+{ text:"The number of cooks and time taken to prepare food.", type:"inverse" },
+{ text:"The number of buses and waiting time at a bus stop.", type:"inverse" },
+{ text:"The number of people sharing food and quantity per person.", type:"inverse" }
+];
+
+/* -------- STATE -------- */
+let stage = "question";
+let chosen = [];
+
+const qEl = document.getElementById("qText");
+const listEl = document.getElementById("listBox");
+const answerEl = document.getElementById("answerBox");
+const promptEl = document.getElementById("prompt");
+const cardEl = document.getElementById("card");
+
+/* -------- LOAD QUESTION -------- */
+function loadQuestion(){
+  stage = "question";
+  answerEl.classList.add("hidden");
+  promptEl.textContent = "Press any key to reveal the answer…";
+
+  chosen = shuffle([...SITUATIONS]).slice(0,5);
+  qEl.textContent = STEMS[rand(0,STEMS.length-1)];
+
+  listEl.innerHTML = chosen
+    .map((x,i)=>`(${i+1}) ${x.text}`)
+    .join("<br>");
+}
+
+/* -------- REVEAL ANSWER -------- */
+function reveal(){
+  stage = "answer";
+  answerEl.classList.remove("hidden");
+  promptEl.textContent = 'Press "y" for next or "n" to exit.';
+
+  let out = "Inverse proportion:\n";
+  let found = false;
+
+  chosen.forEach((x,i)=>{
+    if(x.type==="inverse"){
+      out += `(${i+1}) ${x.text}\n`;
+      found = true;
+    }
+  });
+
+  if(!found) out += "None";
+
+  answerEl.textContent = out;
+}
+
+/* -------- CONTROLS -------- */
+window.addEventListener("keydown",e=>{
+  const k = (e.key||"").toLowerCase();
+
+  if(stage==="question"){
+    reveal();
+  } else {
+    if(k==="y"){
+      loadQuestion();
+    } else if(k==="n"){
+      cardEl.innerHTML =
+        '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+    }
+  }
+});
+
+/* -------- INIT -------- */
+loadQuestion();
+
+})();
+</script>
+</body>
+</html>

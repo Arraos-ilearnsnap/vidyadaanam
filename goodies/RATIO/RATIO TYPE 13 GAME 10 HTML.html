@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Shadows</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+.question{
+  font-size:20px;
+  color:#0b59c6;
+  font-weight:700;
+  line-height:1.45;
+  margin:12px 0;
+}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{
+  white-space:pre-line;
+  font-size:18px;
+  line-height:1.65;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+/* -------- OBJECTS -------- */
+const OBJECTS=[
+  "pole","flagstaff","lamp post","electric pole","signpost",
+  "streetlight","tower column","antenna mast","bamboo pole",
+  "steel rod","pillar","flagpole","lighting mast",
+  "boundary post","marker post"
+];
+
+/* -------- QUESTION VARIANTS (BOTH PARTS) -------- */
+const VARIANTS=[
+(o,h1m,h1c,s1m,s1c,h2m,h2c)=>`A ${o} ${h1m} m ${h1c} cm high casts a shadow ${s1m} m ${s1c} cm long.
+Find at the same time:
+(i) the length of the shadow cast by another ${o} ${h2m} m ${h2c} cm high,
+(ii) the height of a ${o} which casts a shadow 5 m long.`,
+
+(o,h1m,h1c,s1m,s1c,h2m,h2c)=>`At a particular time of day, a ${o} of height ${h1m} m ${h1c} cm throws a shadow ${s1m} m ${s1c} cm.
+At the same time determine:
+(i) the shadow of a ${o} ${h2m} m ${h2c} cm tall,
+(ii) the height of a ${o} whose shadow measures 5 m.`,
+
+(o,h1m,h1c,s1m,s1c,h2m,h2c)=>`When the sun is fixed, a ${o} measuring ${h1m} m ${h1c} cm produces a shadow ${s1m} m ${s1c} cm long.
+Find simultaneously:
+(i) the shadow of a ${o} ${h2m} m ${h2c} cm high,
+(ii) the height of a ${o} that casts a shadow of 5 m.`
+];
+
+let DATA=null,stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+/* -------- GENERATION -------- */
+function generateProblem(){
+  const o=OBJECTS[r(0,OBJECTS.length-1)];
+  const h1m=r(2,9), h1c=r(10,99);
+  const s1m=r(2,9), s1c=r(10,99);
+  const h2m=r(2,9), h2c=r(10,99);
+
+  const question=VARIANTS[r(0,VARIANTS.length-1)](
+    o,h1m,h1c,s1m,s1c,h2m,h2c
+  );
+
+  return {o,h1m,h1c,s1m,s1c,h2m,h2c,question};
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA=generateProblem();
+  qEl.textContent=DATA.question;
+}
+
+/* -------- SOLUTION -------- */
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {o,h1m,h1c,s1m,s1c,h2m,h2c}=DATA;
+
+  const H1=h1m*100+h1c;
+  const S1=s1m*100+s1c;
+  const H2=h2m*100+h2c;
+  const S2=500; // 5 m
+
+  let t="";
+
+  /* ---- PART (i) ---- */
+  t+=`Part (i)\n\n`;
+  t+=`Height  →  Shadow\n`;
+  t+=`${H1} cm  →  ${S1} cm\n`;
+  t+=`${H2} cm  →  x cm\n\n`;
+
+  t+=`By direct proportion,\n`;
+  t+=`${H1} / ${S1} = ${H2} / x\n\n`;
+
+  t+=`Cross multiplying,\n`;
+  t+=`${H1} × x = ${S1} × ${H2}\n\n`;
+
+  t+=`${H1}x = ${S1*H2}\n\n`;
+  t+=`x = ${S1*H2} / ${H1}\n\n`;
+
+  const x1=(S1*H2/H1).toFixed(1);
+  t+=`∴ Shadow length = ${x1} cm\n\n`;
+
+  /* ---- PART (ii) ---- */
+  t+=`Part (ii)\n\n`;
+  t+=`Height  →  Shadow\n`;
+  t+=`${H1} cm  →  ${S1} cm\n`;
+  t+=`y cm  →  ${S2} cm\n\n`;
+
+  t+=`By direct proportion,\n`;
+  t+=`${H1} / ${S1} = y / ${S2}\n\n`;
+
+  t+=`Cross multiplying,\n`;
+  t+=`${S1} × y = ${H1} × ${S2}\n\n`;
+
+  t+=`${S1}y = ${H1*S2}\n\n`;
+  t+=`y = ${H1*S2} / ${S1}\n\n`;
+
+  const y=(H1*S2/S1).toFixed(1);
+  t+=`∴ Height of the ${o} = ${y} cm`;
+
+  stepsEl.textContent=t;
+}
+
+/* -------- CONTROLS -------- */
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") reveal();
+  else if(k==="y") newProblem();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML=
+      '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>

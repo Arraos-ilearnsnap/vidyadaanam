@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Direct Proportion – Speed</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,Roboto,Arial,sans-serif;
+  background:#fff;
+  color:#111;
+}
+.wrap{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:950px;
+  background:#fff;
+  padding:26px;
+  border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+}
+h1{font-size:16px;margin:0 0 10px;font-weight:700;}
+.question{
+  font-size:20px;
+  color:#0b59c6;
+  font-weight:700;
+  line-height:1.45;
+  margin:12px 0;
+}
+.prompt{font-size:13px;color:#666;font-style:italic;}
+.steps{
+  white-space:pre-line;
+  font-size:18px;
+  line-height:1.65;
+  margin-top:16px;
+}
+.hidden{display:none;}
+.foot{margin-top:12px;font-size:13px;color:#666;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card" id="card">
+    <h1>Direct Proportion</h1>
+    <div class="question" id="qText"></div>
+    <div class="prompt" id="prompt">Press any key to reveal the solution…</div>
+    <div class="steps hidden" id="stepsBox"></div>
+    <div class="foot">After reveal press <b>y</b> for next or <b>n</b> to exit.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+/* -------- VEHICLE ALTERNATIVES -------- */
+const VEHICLES = [
+  "loaded truck","cargo lorry","freight vehicle","heavy truck",
+  "goods carrier","transport truck","delivery lorry","haulage truck",
+  "freight lorry","commercial truck","cargo carrier",
+  "long-haul truck","supply truck","transport vehicle","goods truck"
+];
+
+/* -------- QUESTION VARIANTS -------- */
+const VARIANTS = [
+(v,d1,t1,t2,d2)=>`A ${v} travels ${d1} km in ${t1} minutes.
+If the speed remains the same:
+(i) how far will it travel in ${t2} hours?
+(ii) how much time will it take to travel ${d2} km?`,
+
+(v,d1,t1,t2,d2)=>`In ${t1} minutes, a ${v} covers ${d1} km at a constant speed.
+Find:
+(i) the distance covered in ${t2} hours,
+(ii) the time required to cover ${d2} km.`,
+
+(v,d1,t1,t2,d2)=>`A ${v} moving at uniform speed covers ${d1} km in ${t1} minutes.
+Calculate:
+(i) the distance it can travel in ${t2} hours,
+(ii) the time taken to travel ${d2} km.`
+];
+
+let DATA=null,stage="question";
+const qEl=document.getElementById("qText");
+const stepsEl=document.getElementById("stepsBox");
+const prompt=document.getElementById("prompt");
+
+/* -------- GENERATION -------- */
+function generateProblem(){
+  const v = VEHICLES[r(0,VEHICLES.length-1)];
+  const d1 = r(12,20);        // km
+  const t1 = r(20,40);        // minutes
+  const t2 = r(3,6);          // hours
+  const d2 = r(180,300);      // km
+  return {v,d1,t1,t2,d2};
+}
+
+function newProblem(){
+  stage="question";
+  stepsEl.classList.add("hidden");
+  prompt.textContent="Press any key to reveal the solution…";
+  DATA=generateProblem();
+  qEl.textContent=VARIANTS[r(0,2)](
+    DATA.v,DATA.d1,DATA.t1,DATA.t2,DATA.d2
+  );
+}
+
+/* -------- SOLUTION -------- */
+function reveal(){
+  stage="answer";
+  stepsEl.classList.remove("hidden");
+  prompt.textContent='Press "y" for next or "n" to exit.';
+
+  const {d1,t1,t2,d2}=DATA;
+  const t2min = t2 * 60;
+
+  let t="";
+
+  /* ---- PART (i) ---- */
+  t+=`Part (i)\n\n`;
+
+  t+=`Converting hours into minutes,\n`;
+  t+=`1 hour = 60 minutes\n`;
+  t+=`${t2} hours = ${t2} × 60 minutes\n`;
+  t+=`${t2} hours = ${t2min} minutes\n\n`;
+
+  t+=`Time  →  Distance\n`;
+  t+=`${t1} min  →  ${d1} km\n`;
+  t+=`${t2min} min  →  x km\n\n`;
+
+  t+=`By direct proportion,\n`;
+  t+=`${t1} / ${d1} = ${t2min} / x\n\n`;
+
+  t+=`Cross multiplying,\n`;
+  t+=`${t1} × x = ${d1} × ${t2min}\n\n`;
+
+  t+=`${t1}x = ${d1*t2min}\n\n`;
+  t+=`x = ${d1*t2min} / ${t1}\n\n`;
+
+  const dist = (d1*t2min/t1).toFixed(1);
+  t+=`∴ Distance travelled = ${dist} km\n\n`;
+
+  /* ---- PART (ii) ---- */
+  t+=`Part (ii)\n\n`;
+  t+=`Time  →  Distance\n`;
+  t+=`${t1} min  →  ${d1} km\n`;
+  t+=`y min  →  ${d2} km\n\n`;
+
+  t+=`By direct proportion,\n`;
+  t+=`${t1} / ${d1} = y / ${d2}\n\n`;
+
+  t+=`Cross multiplying,\n`;
+  t+=`${d1} × y = ${t1} × ${d2}\n\n`;
+
+  t+=`${d1}y = ${t1*d2}\n\n`;
+  t+=`y = ${t1*d2} / ${d1}\n\n`;
+
+  const timeMin = (t1*d2/d1).toFixed(1);
+  t+=`∴ Time taken = ${timeMin} minutes`;
+
+  stepsEl.textContent=t;
+}
+
+/* -------- CONTROLS -------- */
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") reveal();
+  else if(k==="y") newProblem();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML =
+      '<div style="text-align:center;font-size:20px;padding:40px;">Goodbye — keep learning.</div>';
+  }
+});
+
+newProblem();
+})();
+</script>
+</body>
+</html>
