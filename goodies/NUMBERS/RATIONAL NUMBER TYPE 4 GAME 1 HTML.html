@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Irrational Expression Proof Generator</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f4f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+  }
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 800px;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 16px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #444;
+  }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  .line {
+    margin: 8px 0;
+    font-size: 17px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .math {
+    font-family: "Times New Roman", Times, serif;
+    font-style: italic;
+    font-size: 19px;
+  }
+  .q-block {
+    background: #eef7ff;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 5px solid #007bff;
+    margin-bottom: 20px;
+  }
+  .q-text {
+    font-weight: 700;
+    font-size: 18px;
+    color: #004085;
+    margin: 0;
+  }
+  .proof-step {
+    margin-bottom: 16px;
+  }
+  .conclusion {
+    font-weight: 600;
+    margin-top: 24px;
+    color: #28a745;
+  }
+  /* Helper to make algebraic fractions look decent in plain text/unicode */
+  .fraction {
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0 2px;
+  }
+  .top { border-bottom: 1px solid #000; display: block; padding: 0 2px; }
+  .bottom { display: block; padding: 0 2px; }
+</style>
+</head>
+
+<body>
+
+<main class="card" role="main" aria-live="polite">
+  <div class="header">
+    <h1>Irrational Proof Generator</h1>
+    <button onclick="generateProof()">New Question</button>
+  </div>
+  <div id="content"></div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- CONFIGURATION ---------------- */
+
+const primes = [2, 3, 5, 7, 11, 13, 17, 19];
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/* Data Structure for Question Variants 
+  Each variant has a 'generate' method that returns:
+  - q: The algebraic expression string for the question
+  - rhs_start: The algebraic manipulation step (step 1)
+  - rhs_final: The final isolated form (√p = ...)
+*/
+
+const variants = [
+  /* 1. k√p */
+  {
+    id: 'k_root',
+    generate: (p) => {
+      const k = rand(2, 9);
+      return {
+        q: `${k}√${p}`,
+        rhs_start: `${k}√${p} = a/b`,
+        rhs_final: `√${p} = a / (${k}b)`
+      };
+    }
+  },
+  /* 2. 1/√p */
+  {
+    id: 'one_over_root',
+    generate: (p) => {
+      return {
+        q: `1 / √${p}`,
+        rhs_start: `1 / √${p} = a/b`,
+        rhs_final: `√${p} = b / a`
+      };
+    }
+  },
+  /* 3. k/√p */
+  {
+    id: 'k_over_root',
+    generate: (p) => {
+      const k = rand(2, 9);
+      return {
+        q: `${k} / √${p}`,
+        rhs_start: `${k} / √${p} = a/b`,
+        rhs_final: `√${p} = (${k}b) / a`
+      };
+    }
+  },
+  /* 4. A + √p */
+  {
+    id: 'a_plus_root',
+    generate: (p) => {
+      const a = rand(2, 10);
+      return {
+        q: `${a} + √${p}`,
+        rhs_start: `√${p} = a/b − ${a}`,
+        rhs_final: `√${p} = (a − ${a}b) / b`
+      };
+    }
+  },
+  /* 5. A - √p */
+  {
+    id: 'a_minus_root',
+    generate: (p) => {
+      const a = rand(2, 10);
+      return {
+        q: `${a} − √${p}`,
+        rhs_start: `√${p} = ${a} − a/b`,
+        rhs_final: `√${p} = (${a}b − a) / b`
+      };
+    }
+  },
+  /* 6. √p - A */
+  {
+    id: 'root_minus_a',
+    generate: (p) => {
+      const a = rand(2, 10);
+      return {
+        q: `√${p} − ${a}`,
+        rhs_start: `√${p} = a/b + ${a}`,
+        rhs_final: `√${p} = (a + ${a}b) / b`
+      };
+    }
+  },
+  /* 7. A + B√p  (Corrected Logic) */
+  {
+    id: 'a_plus_b_root',
+    generate: (p) => {
+      const a = rand(2, 9);
+      const b = rand(2, 9);
+      return {
+        q: `${a} + ${b}√${p}`,
+        rhs_start: `${b}√${p} = a/b − ${a} = (a − ${a}b) / b`,
+        rhs_final: `√${p} = (a − ${a}b) / (${b}b)` // Corrected: denominator is Bb
+      };
+    }
+  },
+  /* 8. A - B√p (Corrected Logic) */
+  {
+    id: 'a_minus_b_root',
+    generate: (p) => {
+      const a = rand(2, 9);
+      const b = rand(2, 9);
+      return {
+        q: `${a} − ${b}√${p}`,
+        rhs_start: `${b}√${p} = ${a} − a/b = (${a}b − a) / b`,
+        rhs_final: `√${p} = (${a}b − a) / (${b}b)` // Corrected: denominator is Bb
+      };
+    }
+  },
+  /* 9. B√p - A */
+  {
+    id: 'b_root_minus_a',
+    generate: (p) => {
+      const a = rand(2, 9);
+      const b = rand(2, 9);
+      return {
+        q: `${b}√${p} − ${a}`,
+        rhs_start: `${b}√${p} = a/b + ${a} = (a + ${a}b) / b`,
+        rhs_final: `√${p} = (a + ${a}b) / (${b}b)`
+      };
+    }
+  },
+  /* 10. (A + B√p) / C (Corrected Logic) */
+  {
+    id: 'fraction_a_plus_broot',
+    generate: (p) => {
+      const a = rand(1, 9); // can be 1 here
+      const b = rand(2, 9);
+      const c = rand(2, 9);
+      const top = (a===1) ? `1 + ${b}√${p}` : `${a} + ${b}√${p}`;
+      return {
+        q: `(${top}) / ${c}`,
+        rhs_start: `${top} = ${c}a / b`,
+        rhs_final: `√${p} = (${c}a − ${a}b) / (${b}b)` // Corrected: denominator is Bb
+      };
+    }
+  },
+  /* 11. (A - B√p) / C */
+  {
+    id: 'fraction_a_minus_broot',
+    generate: (p) => {
+      const a = rand(2, 9);
+      const b = rand(2, 9);
+      const c = rand(2, 9);
+      return {
+        q: `(${a} − ${b}√${p}) / ${c}`,
+        rhs_start: `${a} − ${b}√${p} = ${c}a / b`,
+        rhs_final: `√${p} = (${a}b − ${c}a) / (${b}b)`
+      };
+    }
+  },
+  /* 12. 1 / (A + √p) (Reciprocal Sum) */
+  {
+    id: 'reciprocal_sum',
+    generate: (p) => {
+      const a = rand(2, 9);
+      return {
+        q: `1 / (${a} + √${p})`,
+        rhs_start: `${a} + √${p} = b / a`,
+        rhs_final: `√${p} = (b − ${a}a) / a`
+      };
+    }
+  }
+];
+
+/* ---------------- RENDER LOGIC ---------------- */
+
+window.generateProof = function() {
+  const container = document.getElementById("content");
+  container.innerHTML = ""; // clear previous
+
+  // Select Prime
+  const p = primes[Math.floor(Math.random() * primes.length)];
+  
+  // Select Variant
+  const variant = variants[Math.floor(Math.random() * variants.length)];
+  const data = variant.generate(p);
+
+  // Build HTML Content
+  let html = `
+    <div class="q-block">
+      <div class="q-text">Q. Prove that <span class="math">${data.q}</span> is an irrational number, given that <span class="math">√${p}</span> is irrational.</div>
+    </div>
+
+    <div class="proof-step">
+      <strong>Step 1: Assumption</strong><br>
+      Assume to the contrary that <span class="math">${data.q}</span> is a rational number.<br>
+      <div class="line">
+        ⇒ <span class="math">${data.q} = a / b</span>
+      </div>
+      <div style="margin-left:20px; font-size:15px; color:#666;">
+        (where <em>a</em> and <em>b</em> are co-prime integers and <em>b ≠ 0</em>)
+      </div>
+    </div>
+
+    <div class="proof-step">
+      <strong>Step 2: Rearranging terms</strong><br>
+      We rearrange the equation to isolate <span class="math">√${p}</span> on the LHS:<br>
+      <div class="line">
+         ⇒ <span class="math">${data.rhs_start}</span>
+      </div>
+      <div class="line">
+         ⇒ <span class="math">${data.rhs_final}</span>
+      </div>
+    </div>
+
+    <div class="proof-step">
+      <strong>Step 3: Contradiction</strong><br>
+      <div class="line">
+        In the equation <span class="math">${data.rhs_final}</span>:
+      </div>
+      <ul>
+        <li>The LHS (<span class="math">√${p}</span>) is an <strong>irrational number</strong> (given).</li>
+        <li>The RHS contains integers <em>a, b</em> and constants. Since rational numbers are closed under addition, subtraction, multiplication, and division, the RHS is a <strong>rational number</strong>.</li>
+      </ul>
+      <div class="line">
+        An irrational number cannot equal a rational number.
+      </div>
+    </div>
+
+    <div class="conclusion">
+      ⇒ Therefore, our assumption is incorrect.<br>
+      ⇒ <span class="math">${data.q}</span> is an irrational number.
+    </div>
+  `;
+
+  container.innerHTML = html;
+};
+
+// Init
+generateProof();
+
+})();
+</script>
+</body>
+</html>

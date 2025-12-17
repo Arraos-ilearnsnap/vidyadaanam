@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rational Number Between √p and √q</title>
+
+<style>
+  body{
+    margin:0;
+    padding:24px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background:#ffffff;
+    color:#111;
+  }
+  .card{
+    max-width:900px;
+    margin:0 auto;
+    border-radius:12px;
+    padding:24px 26px;
+    box-shadow:0 8px 26px rgba(0,0,0,0.08);
+  }
+  .q{
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+  .step{
+    margin-top:10px;
+    font-size:16px;
+    line-height:1.55;
+  }
+  .math{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    font-weight:600;
+  }
+  .muted{
+    color:#666;
+  }
+  .answer{
+    margin-top:14px;
+    font-size:17px;
+    font-weight:700;
+    color:#0a7a3d;
+  }
+  .prompt{
+    margin-top:14px;
+    font-size:13px;
+    font-style:italic;
+    color:#555;
+  }
+  .goodbye{
+    text-align:center;
+    font-size:22px;
+    padding:40px 0;
+  }
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+
+  <div class="q" id="question">—</div>
+
+  <div class="step" id="step1"></div>
+  <div class="step" id="step2"></div>
+  <div class="step" id="step3"></div>
+  <div class="step" id="step4"></div>
+
+  <div class="answer" id="finalAnswer"></div>
+
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next question or <b>n</b> to exit.
+  </div>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  const PRIMES = [
+    2,3,5,7,11,13,17,19,23,29,
+    31,37,41,43,47,53,59,61,67,71,
+    73,79,83,89,97,101
+  ];
+
+  let stage = "question";
+  let p = 0, q = 0;
+  let sqrtP = 0, sqrtQ = 0;
+  let r1 = 0, r2 = 0, chosen = 0;
+
+  const qEl = document.getElementById("question");
+  const s1 = document.getElementById("step1");
+  const s2 = document.getElementById("step2");
+  const s3 = document.getElementById("step3");
+  const s4 = document.getElementById("step4");
+  const ans = document.getElementById("finalAnswer");
+  const prompt = document.getElementById("prompt");
+  const card = document.getElementById("card");
+
+  function randomPair(){
+    const i = Math.floor(Math.random() * (PRIMES.length - 1));
+    return [PRIMES[i], PRIMES[i+1]];
+  }
+
+  function fixed(n){
+    return n.toFixed(10);
+  }
+
+  function ask(){
+    stage = "question";
+    s1.textContent = "";
+    s2.textContent = "";
+    s3.textContent = "";
+    s4.textContent = "";
+    ans.textContent = "";
+
+    [p, q] = randomPair();
+
+    sqrtP = Math.sqrt(p);
+    sqrtQ = Math.sqrt(q);
+
+    r1 = Math.ceil(sqrtP * 10) / 10;
+    r2 = Math.floor(sqrtQ * 10) / 10;
+    if(r1 === r2){
+      r2 = r2 - 0.1;
+    }
+    chosen = r1;
+
+    qEl.innerHTML =
+      'Find a rational number between <span class="math">√' + p +
+      '</span> and <span class="math">√' + q + '</span>.';
+
+    prompt.textContent =
+      'Press any key to reveal the solution. After reveal press y for next or n to exit.';
+  }
+
+  function reveal(){
+    stage = "answer";
+
+    s1.innerHTML =
+      '<b>Step 1:</b> ' +
+      'Square root of prime numbers are irrational and their decimal expansion never stops and never repeats in any pattern.<br>' +
+      '√' + p + ' = ' + fixed(sqrtP) + '… , √' + q + ' = ' + fixed(sqrtQ) + '…<br>' +
+      'In decimal form, √' + p + ' lies near ' + fixed(sqrtP) + '…' +
+      ' while √' + q + ' lies near ' + fixed(sqrtQ) + '….<br>' +
+      'Writing their decimal expansions shows the relative positions of √' + p +
+      ' and √' + q + ' clearly.';
+
+    s2.innerHTML =
+      '<b>Step 2:</b> ' +
+      'Since ' + fixed(sqrtP) + '… &lt; ' + fixed(sqrtQ) + '…' +
+      ', any number chosen between these two values will lie between √' + p +
+      ' and √' + q + '.<br>' +
+      'The interval from ' + fixed(sqrtP) + '… to ' + fixed(sqrtQ) + '…' +
+      ' contains many decimal numbers.<br>' +
+      'Hence, we look for a terminating decimal strictly inside this interval.';
+
+    s3.innerHTML =
+      '<b>Step 3:</b> ' +
+      r1.toFixed(1) + ' and ' + r2.toFixed(1) +
+      ' lie between ' + fixed(sqrtP) + '… and ' + fixed(sqrtQ) + '….<br>' +
+      'Both ' + r1.toFixed(1) + ' and ' + r2.toFixed(1) +
+      ' are terminating decimals, so they are rational numbers.<br>' +
+      'Any such terminating decimal between the two square roots is acceptable.';
+
+    s4.innerHTML =
+      '<b>Step 4:</b> ' +
+      'We choose ' + chosen.toFixed(1) +
+      ' as one rational number between √' + p + ' and √' + q + '.<br>' +
+      chosen.toFixed(1) + ' has a terminating decimal expansion, hence it is rational.<br>' +
+      'Therefore, ' + chosen.toFixed(1) +
+      ' lies strictly between √' + p + ' and √' + q + '.';
+
+    ans.textContent =
+      'Required rational number between √' + p + ' and √' + q +
+      ' is ' + chosen.toFixed(1) + '.';
+
+    prompt.textContent =
+      'Press y for another question or n to exit.';
+  }
+
+  ask();
+
+  window.addEventListener("keydown", function(e){
+    const k = (e.key || "").toLowerCase();
+    if(stage === "question"){
+      reveal();
+    }else{
+      if(k === "y"){
+        ask();
+      }else if(k === "n"){
+        card.innerHTML =
+          '<div class="goodbye">Goodbye — thanks!<div class="muted">You may now close this tab.</div></div>';
+      }
+    }
+  });
+
+  document.addEventListener("selectstart", e => e.preventDefault());
+})();
+</script>
+</body>
+</html>

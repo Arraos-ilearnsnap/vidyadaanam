@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checking last digit of aⁿ</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:26px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:14px;
+}
+.line{
+  font-size:16px;
+  margin:6px 0;
+  white-space:pre-wrap;
+  line-height:1.6;
+}
+.factor{
+  font-family:monospace;
+}
+.prompt{
+  margin-top:14px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+
+<div id="content"></div>
+<div class="prompt" id="prompt">
+Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+</div>
+
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+let stage = "question";
+
+/* -------- NUMBER GENERATION -------- */
+/* under 50, even or odd, but NOT containing factor 10 (i.e. not divisible by both 2 and 5) */
+
+const CANDIDATES = [];
+for(let i=2;i<50;i++){
+  if(!(i%2===0 && i%5===0)){
+    CANDIDATES.push(i);
+  }
+}
+
+const n = CANDIDATES[Math.floor(Math.random()*CANDIDATES.length)];
+
+/* -------- PRIME FACTORIZATION -------- */
+
+function factorize(x){
+  const primes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  let steps = [];
+  let factors = [];
+  let temp = x;
+
+  for(let p of primes){
+    while(temp % p === 0){
+      steps.push(`${p} | ${temp}`);
+      factors.push(p);
+      temp = temp / p;
+    }
+  }
+  steps.push("    1");
+  return {steps, factors};
+}
+
+/* -------- RENDER QUESTION -------- */
+
+function showQuestion(){
+  content.innerHTML = `
+    <div class="q">
+      Q. Check whether ${n}<sup>n</sup> can end with the digit 0 for any natural number n.
+    </div>
+  `;
+  stage = "question";
+}
+
+/* -------- RENDER ANSWER -------- */
+
+function showAnswer(){
+  const data = factorize(n);
+  const factorText = data.factors.join(" × ");
+
+  content.innerHTML = `
+    <div class="q">
+      Q. Check whether ${n}<sup>n</sup> can end with the digit 0 for any natural number n.
+    </div>
+
+    <div class="line">⇒ Prime factorization of ${n}:</div>
+    <div class="line factor">${data.steps.join("\n")}</div>
+
+    <div class="line">⇒ ${n} = ${factorText}</div>
+
+    <div class="line">
+      ⇒ For a number to end with the digit 0, it must contain the factor 10,
+      i.e. it must have both 2 and 5 as prime factors.
+    </div>
+
+    <div class="line">
+      ⇒ According to Theorem 1.1 (Fundamental Theorem of Arithmetic),
+      the prime factorization of a natural number is unique except for the order of its factors.
+    </div>
+
+    <div class="line">
+      ⇒ ${n} cannot have any prime factors other than ${factorText}.
+    </div>
+
+    <div class="line">
+      ∴ ${n}<sup>n</sup> = (${factorText})<sup>n</sup>
+    </div>
+
+    <div class="line">
+      ∴ ${n}<sup>n</sup> cannot end with the digit 0 as it has ${
+        data.factors.includes(2) ? "2" : "no factor 2"
+      } but ${
+        data.factors.includes(5) ? "also has 5" : "does not have 5"
+      } as a prime factor.
+    </div>
+  `;
+
+  prompt.textContent = "Press y for next question or n to exit.";
+  stage = "answer";
+}
+
+/* -------- KEYBOARD FLOW -------- */
+
+showQuestion();
+
+window.addEventListener("keydown", function(e){
+  const k = (e.key||"").toLowerCase();
+  if(stage==="question"){
+    showAnswer();
+  }else{
+    if(k==="y"){
+      location.reload();
+    }else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        "<div class='q'>Session ended.</div>";
+    }
+  }
+});
+
+})();
+</script>
+</body>
+</html>

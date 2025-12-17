@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCM using HCF</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  border-radius:12px;
+  padding:26px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.line{
+  margin:6px 0;
+  font-size:16px;
+  line-height:1.6;
+  white-space:pre-wrap;
+}
+.q{
+  font-weight:700;
+  font-size:18px;
+  margin-bottom:12px;
+}
+.answer{
+  margin-top:10px;
+  font-weight:700;
+}
+.box{
+  display:inline-block;
+  padding:4px 10px;
+  border:2px solid #111;
+}
+.prompt{
+  margin-top:14px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+<div id="content"></div>
+<div class="prompt" id="prompt">
+Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+let stage = "question";
+
+/* ----------- RANDOM DATA (HCF ≠ 1) ----------- */
+
+const hcfList = [2,3,4,5,6,7,8,9];
+const H = hcfList[Math.floor(Math.random()*hcfList.length)];
+
+const m1 = Math.floor(Math.random()*50)+20;
+const m2 = Math.floor(Math.random()*50)+30;
+
+const A = H * m1;
+const B = H * m2;
+
+const LCM = (A * B) / H;
+
+/* ----------- RENDER QUESTION ----------- */
+
+function showQuestion(){
+  content.innerHTML = `
+  <div class="line q">
+  Q. Given that HCF (${A}, ${B}) = ${H}, find LCM (${A}, ${B}).
+  </div>
+  `;
+  stage = "question";
+}
+
+function showAnswer(){
+  content.innerHTML = `
+  <div class="line q">
+  Q. Given that HCF (${A}, ${B}) = ${H}, find LCM (${A}, ${B}).
+  </div>
+
+  <div class="line">
+  HCF × LCM = Product of the two numbers
+  </div>
+
+  <div class="line">
+  ⇒ ${H} × LCM = ${A} × ${B}
+  </div>
+
+  <div class="line">
+  ⇒ LCM = (${A} × ${B}) / ${H}
+  </div>
+
+  <div class="line">
+  ⇒ LCM = ${A/H} × ${B}
+  </div>
+
+  <div class="line">
+  ⇒ LCM = ${LCM}
+  </div>
+
+  <div class="line answer">
+  Ans: The LCM of ${A} and ${B} is <span class="box">${LCM}</span>.
+  </div>
+  `;
+  prompt.textContent = "Press y for next question or n to exit.";
+  stage = "answer";
+}
+
+/* ----------- KEYBOARD CONTROL ----------- */
+
+showQuestion();
+
+window.addEventListener("keydown", function(e){
+  const k = (e.key || "").toLowerCase();
+  if(stage==="question"){
+    showAnswer();
+  }else{
+    if(k==="y"){
+      location.reload();
+    }else if(k==="n"){
+      document.getElementById("card").innerHTML =
+        `<div class="line q">Goodbye.</div>`;
+    }
+  }
+});
+
+})();
+</script>
+</body>
+</html>

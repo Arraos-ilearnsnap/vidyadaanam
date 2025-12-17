@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Irrationality Proof Generator</title>
+
+<style>
+  body{
+    margin:0;
+    padding:24px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background:#ffffff;
+    color:#111;
+  }
+  .card{
+    max-width:900px;
+    margin:0 auto;
+    border-radius:12px;
+    padding:26px;
+    box-shadow:0 8px 26px rgba(0,0,0,0.08);
+  }
+  .line{
+    margin:6px 0;
+    font-size:16px;
+    line-height:1.6;
+    white-space:pre-wrap;
+  }
+  .q{
+    font-weight:700;
+    font-size:18px;
+    margin-bottom:10px;
+  }
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite">
+
+<div id="content"></div>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  // non-perfect squares between 2 and 50
+  const candidates = [
+    2,3,5,6,7,8,10,11,12,13,14,15,17,18,19,20,
+    21,22,23,24,26,27,28,29,30,31,32,33,34,35,
+    37,38,39,40,41,42,43,44,45,46,47,48,50
+  ];
+
+  const n = candidates[Math.floor(Math.random() * candidates.length)];
+  const n2 = n * n;
+
+  const lines = [
+    `Q. Prove that √${n} is an irrational number.`,
+
+    `1) Assume to the contrary that`,
+    `   √${n} is rational`,
+    `   √${n} = p / q , p & q are integers`,
+    `   p, q ∈ Z`,
+    `   q is non-zero`,
+    `   q ≠ 0`,
+
+    `2) Simplify p & q to get a and`,
+    `   b as co-primes`,
+    `   √${n} = a / b , a & b are coprimes`,
+
+    `3) ⇒ √${n} b = a   (square both sides)`,
+    `   ⇒ ${n} b² = a²  ... (I)`,
+    `   ∴ ${n} divides a²   [Theorem 1.2]`,
+    `   ∴ ${n} divides a`,
+    `   ⇒ a = ${n}c , c is an integer  ...(II)`,
+
+    `4) Substituting (II) in (I)`,
+    `   ⇒ ${n} b² = (${n}c)²`,
+    `   ⇒ ${n} b² = ${n2} c²`,
+    `   ⇒ b² = ${n} c²`,
+    `   ∴ ${n} divides b²   [From Theorem 1.2]`,
+    `   ∴ ${n} divides b`,
+
+    `5) a & b have a common factor`,
+    `   of ${n}, but co-primes can have`,
+    `   a common factor as ‘1’ only`,
+
+    `⇒ Our assumption was wrong`,
+    `   √${n} is irrational (by method`,
+    `   of contradiction)`,
+
+    `Hence proved.`
+  ];
+
+  const container = document.getElementById("content");
+
+  lines.forEach((t,i)=>{
+    const div = document.createElement("div");
+    div.className = (i===0) ? "line q" : "line";
+    div.textContent = t;
+    container.appendChild(div);
+  });
+
+})();
+</script>
+</body>
+</html>

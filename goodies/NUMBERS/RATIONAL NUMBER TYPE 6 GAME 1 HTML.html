@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LCM and HCF – Exam Practice</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f8f9fa;
+    color: #111;
+  }
+  .card {
+    max-width: 900px;
+    margin: auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  .q {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #0056b3;
+    line-height: 1.4;
+  }
+  .line {
+    font-size: 16px;
+    margin: 8px 0;
+    white-space: pre-wrap;
+    font-family: "Courier New", Courier, monospace;
+  }
+  .math-block {
+    background: #f1f3f5;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-family: "Times New Roman", serif;
+  }
+  .hint {
+    font-size: 14px;
+    font-style: italic;
+    color: #666;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+  b { color: #d63384; }
+  .verify-box {
+    border-left: 4px solid #198754;
+    padding-left: 15px;
+    background: #e9f7ef;
+  }
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+  <div id="content"></div>
+  <div class="hint" id="hint">Press any key to see the solution.</div>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  const PAIRS = [
+    [36, 84], [23, 31], [96, 404],
+    [144, 198], [396, 1080],
+    [1152, 1664], [26, 91],
+    [510, 92], [336, 54]
+  ];
+
+  const PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+
+  let stage = "question";
+  const content = document.getElementById("content");
+  const hint = document.getElementById("hint");
+
+  function factorize(n) {
+    let temp = n;
+    let steps = [];
+    let factors = [];
+    
+    // Check against the known primes list
+    for (const p of PRIMES) {
+      while (temp % p === 0) {
+        steps.push(`${p.toString().padStart(2, ' ')} | ${temp}`);
+        factors.push(p);
+        temp /= p;
+      }
+    }
+    
+    // FIX: If temp is still > 1, it means the remaining temp is a prime > 29
+    if (temp > 1) {
+      steps.push(`${temp.toString().padStart(2, ' ')} | ${temp}`);
+      factors.push(temp);
+      temp = 1;
+    }
+    
+    steps.push("   | 1");
+    return { steps, factors };
+  }
+
+  function getPowerMap(factors) {
+    const map = {};
+    factors.forEach(f => map[f] = (map[f] || 0) + 1);
+    return map;
+  }
+
+  function expForm(factors) {
+    const map = getPowerMap(factors);
+    return Object.keys(map)
+      .map(p => map[p] > 1 ? `${p}<sup>${map[p]}</sup>` : `${p}`)
+      .join(" × ");
+  }
+
+  function ask() {
+    stage = "question";
+    content.innerHTML = "";
+    hint.textContent = "Press any key to see the solution.";
+
+    const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+    const a = pair[0], b = pair[1];
+
+    content.dataset.state = JSON.stringify({ a, b });
+
+    content.innerHTML =
+      `<div class="q">
+        Q. Find the LCM and HCF of the following pair of integers and verify that<br>
+        <b>LCM × HCF = Product of the two numbers</b>.<br><br>
+        Target Pair: (${a}, ${b})
+      </div>`;
+  }
+
+  function reveal() {
+    stage = "answer";
+    const { a, b } = JSON.parse(content.dataset.state);
+    const fa = factorize(a);
+    const fb = factorize(b);
+
+    const mapA = getPowerMap(fa.factors);
+    const mapB = getPowerMap(fb.factors);
+    
+    // Get all unique prime factors from both numbers
+    const allPrimes = [...new Set([...fa.factors, ...fb.factors])].sort((x, y) => x - y);
+
+    let hcfVal = 1;
+    let hcfParts = [];
+    let lcmVal = 1;
+    let lcmParts = [];
+
+    allPrimes.forEach(p => {
+      const pA = mapA[p] || 0;
+      const pB = mapB[p] || 0;
+
+      // HCF: Smallest power of common factors
+      if (pA > 0 && pB > 0) {
+        const minP = Math.min(pA, pB);
+        hcfVal *= Math.pow(p, minP);
+        hcfParts.push(minP > 1 ? `${p}<sup>${minP}</sup>` : `${p}`);
+      }
+
+      // LCM: Greatest power of all factors
+      const maxP = Math.max(pA, pB);
+      lcmVal *= Math.pow(p, maxP);
+      lcmParts.push(maxP > 1 ? `${p}<sup>${maxP}</sup>` : `${p}`);
+    });
+
+    const hcfExp = hcfParts.length ? hcfParts.join(" × ") : "1";
+    const lcmExp = lcmParts.join(" × ");
+
+    content.innerHTML += `
+      <div class="math-block">
+        <b>Step 1: Prime Factorization</b><br><br>
+        Factorization of ${a}:<br>
+        <div class="line">${fa.steps.join("\n")}</div>
+        ${a} = ${expForm(fa.factors)}<br><br>
+        
+        Factorization of ${b}:<br>
+        <div class="line">${fb.steps.join("\n")}</div>
+        ${b} = ${expForm(fb.factors)}
+      </div>
+
+      <div class="math-block">
+        <b>Step 2: Find HCF and LCM</b><br><br>
+        HCF (Product of smallest powers of common factors):<br>
+        HCF = ${hcfExp} = <b>${hcfVal}</b><br><br>
+        
+        LCM (Product of greatest powers of all factors):<br>
+        LCM = ${lcmExp} = <b>${lcmVal}</b>
+      </div>
+
+      <div class="math-block verify-box">
+        <b>Step 3: Verification</b><br><br>
+        LHS: HCF × LCM = ${hcfVal} × ${lcmVal} = <b>${hcfVal * lcmVal}</b><br>
+        RHS: Product of numbers = ${a} × ${b} = <b>${a * b}</b><br><br>
+        Since LHS = RHS, the relationship is verified.
+      </div>
+    `;
+
+    hint.textContent = "Press 'Y' for next question or 'N' to exit.";
+  }
+
+  ask();
+
+  window.addEventListener("keydown", function(e) {
+    const k = (e.key || "").toLowerCase();
+    if (stage === "question") {
+      reveal();
+    } else {
+      if (k === "y") ask();
+      if (k === "n") {
+        document.getElementById("card").innerHTML = "<div class='q'>Practice session completed. Well done!</div>";
+      }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

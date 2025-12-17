@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning Version – Proving √n is Irrational</title>
+
+<style>
+  body{
+    margin:0;
+    padding:24px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background:#ffffff;
+    color:#111;
+  }
+  .card{
+    max-width:900px;
+    margin:0 auto;
+    border-radius:12px;
+    padding:28px;
+    box-shadow:0 8px 26px rgba(0,0,0,0.08);
+  }
+  .q{
+    font-weight:700;
+    font-size:20px;
+    margin-bottom:16px;
+  }
+  .step{
+    margin:14px 0;
+    font-size:16px;
+    line-height:1.7;
+  }
+  .label{
+    font-weight:700;
+  }
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite">
+
+<script>
+(function(){
+  "use strict";
+
+  const candidates = [
+    2,3,5,6,7,8,10,11,12,13,14,15,17,18,19,20,
+    21,22,23,24,26,27,28,29,30,31,32,33,34,35,
+    37,38,39,40,41,42,43,44,45,46,47,48,50
+  ];
+
+  const n = candidates[Math.floor(Math.random() * candidates.length)];
+  const n2 = n * n;
+
+  const content = document.currentScript.parentElement;
+
+  function add(html){
+    const div = document.createElement("div");
+    div.className = "step";
+    div.innerHTML = html;
+    content.appendChild(div);
+  }
+
+  add(`<div class="q">
+    Q. Prove that √${n} is an irrational number.
+  </div>`);
+
+  add(`
+  <span class="label">Step 1: Understanding the method</span><br>
+  We will use the <b>method of contradiction</b>.<br>
+  In this method, we first assume the opposite of what we want to prove.<br>
+  If this assumption leads to a contradiction, then the assumption must be false.
+  `);
+
+  add(`
+  <span class="label">Step 2: Making the opposite assumption</span><br>
+  We assume that √${n} is a rational number.<br>
+  If √${n} is rational, it can be written as a fraction of two integers.
+  `);
+
+  add(`
+  <span class="label">Step 3: Writing √${n} as a fraction</span><br>
+  So we write √${n} = p / q.<br>
+  Here, p and q are integers.<br>
+  Also, q is not equal to zero, because division by zero is not allowed.
+  `);
+
+  add(`
+  <span class="label">Step 4: Writing the fraction in lowest form</span><br>
+  Any fraction can be simplified to its lowest form.<br>
+  After simplification, we write √${n} = a / b.<br>
+  Here, a and b are co-prime numbers.<br>
+  This means that a and b have no common factor except 1.
+  `);
+
+  add(`
+  <span class="label">Important background theorem</span><br>
+  The following result is based on a corollary of the <b>Fundamental Theorem of Arithmetic</b>.<br><br>
+  The Fundamental Theorem of Arithmetic states that every integer greater than 1 is either
+  a prime number itself or can be written as a unique product of prime numbers,
+  regardless of the order of the factors.<br>
+  This is also known as the <b>unique factorization theorem</b>.<br><br>
+  From this theorem, we get the following result (Theorem 1.2):<br>
+  <b>Let p be a prime number. If p divides a², then p divides a,
+  where a is a positive integer.</b>
+  `);
+
+  add(`
+  <span class="label">Step 5: Removing the square root</span><br>
+  From √${n} = a / b, we multiply both sides by b.<br>
+  This gives √${n} · b = a.<br>
+  Now we square both sides to remove the square root.<br>
+  After squaring, we get ${n}b² = a². <b>(Equation I)</b>
+  `);
+
+  add(`
+  <span class="label">Step 6: Using divisibility</span><br>
+  From equation (I), we see that ${n} multiplied by b² gives a².<br>
+  This means that ${n} divides a².<br>
+  Using Theorem 1.2, if ${n} divides a², then ${n} must also divide a.<br>
+  Therefore, we can write a = ${n}c, where c is an integer. <b>(Equation II)</b>
+  `);
+
+  add(`
+  <span class="label">Step 7: Substituting the value of a</span><br>
+  Now we substitute a = ${n}c from equation (II) into equation (I).<br>
+  This gives ${n}b² = (${n}c)².<br>
+  Simplifying, we get ${n}b² = ${n2}c².<br>
+  Dividing both sides by ${n}, we get b² = ${n}c².
+  `);
+
+  add(`
+  <span class="label">Step 8: Divisibility of b</span><br>
+  From b² = ${n}c², we see that ${n} divides b².<br>
+  Again using Theorem 1.2, this means that ${n} also divides b.
+  `);
+
+  add(`
+  <span class="label">Step 9: Reaching the contradiction</span><br>
+  We have shown that ${n} divides both a and b.<br>
+  This means a and b have ${n} as a common factor.<br>
+  But earlier we assumed that a and b are co-prime.<br>
+  Co-prime numbers can have only 1 as a common factor.<br>
+  This is a contradiction.
+  `);
+
+  add(`
+  <span class="label">Conclusion</span><br>
+  Our assumption that √${n} is rational is wrong.<br>
+  Therefore, √${n} is an irrational number.<br>
+  This completes the proof using the method of contradiction.<br><br>
+  <b>Hence proved.</b>
+  `);
+
+})();
+</script>
+
+</main>
+</body>
+</html>
