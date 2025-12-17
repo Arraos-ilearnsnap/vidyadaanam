@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quadratic Polynomial from Sum & Product of Zeroes</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:980px;
+  margin:auto;
+  padding:26px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:14px;
+}
+.line{
+  font-size:16px;
+  margin:6px 0;
+  white-space:pre-wrap;
+  line-height:1.6;
+}
+.box{
+  display:inline-block;
+  padding:6px 12px;
+  border:2px solid #111;
+  font-weight:700;
+  margin-top:6px;
+}
+.prompt{
+  margin-top:14px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+<div id="content"></div>
+<div class="prompt" id="prompt">
+Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+let stage = "question";
+
+/* ---------- ROOT GENERATION ---------- */
+/* integer or single-digit rational */
+
+function randInt(){
+  const n = Math.floor(Math.random()*9)+1;
+  return Math.random()<0.5 ? n : -n;
+}
+
+function randRational(){
+  const num = randInt();
+  let den;
+  do{ den = Math.floor(Math.random()*9)+1; }while(den===0);
+  return {num, den};
+}
+
+const useRational = Math.random()<0.6;
+
+let alpha, beta;
+
+if(useRational){
+  const r1 = randRational();
+  const r2 = Math.random()<0.5 ? randInt() : randRational();
+  alpha = r1;
+  beta  = r2;
+}else{
+  alpha = randInt();
+  beta  = randInt();
+}
+
+/* ---------- FRACTION UTILITIES ---------- */
+
+function toFrac(x){
+  if(typeof x==="number") return {num:x, den:1};
+  return x;
+}
+
+function add(a,b){
+  return {
+    num: a.num*b.den + b.num*a.den,
+    den: a.den*b.den
+  };
+}
+
+function mul(a,b){
+  return {
+    num: a.num*b.num,
+    den: a.den*b.den
+  };
+}
+
+function simplify(f){
+  function gcd(a,b){ return b?gcd(b,a%b):Math.abs(a); }
+  const g = gcd(f.num,f.den);
+  return {num:f.num/g, den:f.den/g};
+}
+
+function lcm(a,b){
+  function gcd(x,y){ return y?gcd(y,x%y):Math.abs(x); }
+  return Math.abs(a*b)/gcd(a,b);
+}
+
+/* ---------- COMPUTATIONS ---------- */
+
+const A = toFrac(alpha);
+const B = toFrac(beta);
+
+const sum = simplify(add(A,B));
+const prod = simplify(mul(A,B));
+
+const K = lcm(sum.den, prod.den);
+
+/* ---------- FORM STRINGS ---------- */
+
+function fracStr(f){
+  return f.den===1 ? `${f.num}` : `${f.num}/${f.den}`;
+}
+
+function polyStr(){
+  return `${K}x² ${-(K*sum.num/sum.den)>=0?"+":"-"} ${Math.abs(K*sum.num/sum.den)}x ${K*prod.num/prod.den>=0?"+":"-"} ${Math.abs(K*prod.num/prod.den)} = 0`;
+}
+
+/* ---------- QUESTION ---------- */
+
+function showQuestion(){
+  content.innerHTML = `
+  <div class="q">
+    Q. Find a quadratic polynomial with the given numbers as the sum and product of its zeroes respectively:
+  </div>
+  <div class="line">
+    α + β = ${fracStr(sum)}, &nbsp;&nbsp; αβ = ${fracStr(prod)}
+  </div>
+  `;
+  stage="question";
+}
+
+/* ---------- ANSWER ---------- */
+
+function showAnswer(){
+  content.innerHTML = `
+  <div class="q">
+    Q. Find a quadratic polynomial with the given numbers as the sum and product of its zeroes respectively:
+  </div>
+
+  <div class="line">
+    α + β = ${fracStr(sum)} = -b/a &nbsp; ...(1)
+  </div>
+  <div class="line">
+    αβ = ${fracStr(prod)} = c/a &nbsp; ...(2)
+  </div>
+
+  <div class="line">
+    The required quadratic polynomial is:
+  </div>
+
+  <div class="line">
+    k(x² - (sum of zeroes)x + product of zeroes) = 0
+  </div>
+
+  <div class="line">
+    ⇒ k(x² - (${fracStr(sum)})x + (${fracStr(prod)})) = 0
+  </div>
+
+  <div class="line">
+    Let k = ${K}, (minimum value to clear denominators)
+  </div>
+
+  <div class="box">
+    ⇒ ${polyStr()}
+  </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="answer";
+}
+
+/* ---------- FLOW ---------- */
+
+showQuestion();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") showAnswer();
+  else{
+    if(k==="y") location.reload();
+    if(k==="n") document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>";
+  }
+});
+
+})();
+</script>
+</body>
+</html>

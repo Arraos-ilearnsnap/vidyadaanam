@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factorisation by Splitting the Middle Term</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:950px;
+  margin:auto;
+  padding:26px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+.line{
+  font-size:16px;
+  margin:6px 0;
+  white-space:pre-wrap;
+  line-height:1.6;
+}
+.factor{
+  font-family:monospace;
+}
+.prompt{
+  margin-top:14px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+.answer{
+  margin-top:10px;
+  font-weight:700;
+}
+</style>
+</head>
+
+<body>
+<main class="card" role="main" aria-live="polite" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+let stage = "question";
+
+/* ---------- RANDOM FACTOR GENERATION ---------- */
+
+function rand(n){ return Math.floor(Math.random()*n)+1; }
+function sign(){ return Math.random()<0.5 ? 1 : -1; }
+
+let p = rand(9), r = rand(9), q = rand(9), s = rand(9);
+let sp = sign(), sr = sign();
+
+/* sometimes force cancellation pattern */
+if(Math.random()<0.3){
+  p = r = 1;
+  q = s;
+  sp = 1;
+  sr = -1;
+}
+
+/* coefficients */
+const a = p*r;
+const b = p*sr*s + r*sp*q;
+const c = sp*sr*q*s;
+const ac = a*c;
+
+/* ---------- PRIME FACTORIZATION ---------- */
+
+const PRIMES = [2,3,5,7,11,13,17,19];
+
+function factorize(n){
+  let steps = [];
+  let factors = [];
+  let t = Math.abs(n);
+  for(let p of PRIMES){
+    while(t % p === 0){
+      steps.push(`${p} | ${t}`);
+      factors.push(p);
+      t /= p;
+    }
+  }
+  steps.push("    1");
+  return {steps,factors};
+}
+
+function factorString(n){
+  if(Math.abs(n) === 1) return "1";
+  const f = factorize(n).factors;
+  return f.length ? f.join(" × ") : Math.abs(n).toString();
+}
+
+/* ---------- SPLITTING LOGIC ---------- */
+
+function findSplit(ac,b){
+  for(let i=-Math.abs(ac); i<=Math.abs(ac); i++){
+    if(i!==0 && ac%i===0 && i + ac/i === b){
+      return [i, ac/i];
+    }
+  }
+  return [0,0];
+}
+
+const [g1, g2] = findSplit(ac,b);
+
+/* ---------- RENDER QUESTION ---------- */
+
+function showQuestion(){
+  content.innerHTML = `
+    <div class="q">Q. Factorise the quadratic expression:</div>
+    <div class="line">
+      ${a}x<sup>2</sup> ${b>=0?"+":"-"} ${Math.abs(b)}x ${c>=0?"+":"-"} ${Math.abs(c)}
+    </div>
+  `;
+  stage="question";
+}
+
+/* ---------- RENDER ANSWER ---------- */
+
+function showAnswer(){
+  content.innerHTML = `
+    <div class="q">Q. Factorise the quadratic expression:</div>
+    <div class="line">
+      ${a}x<sup>2</sup> ${b>=0?"+":"-"} ${Math.abs(b)}x ${c>=0?"+":"-"} ${Math.abs(c)}
+    </div>
+
+    <div class="line">Here, a = ${a}, b = ${b}, c = ${c}</div>
+
+    <div class="line">a × c = ${a} × ${c} = ${ac}</div>
+
+    <div class="line"><b>Prime factorization of ${ac}:</b></div>
+    <div class="line factor">${factorize(ac).steps.join("\n")}</div>
+
+    <div class="line">
+      We choose two groups such that their product is ${ac} and sum is ${b}:
+    </div>
+
+    <div class="line">
+      Group 1 = ${g1} &nbsp;&nbsp; Group 2 = ${g2}
+    </div>
+
+    <div class="line">
+      ⇒ Group 1 = ${g1<0?"-":""}${factorString(g1)} &nbsp;&nbsp;
+         Group 2 = ${g2<0?"-":""}${factorString(g2)}
+    </div>
+
+    <div class="line">
+      ⇒ ${a}x<sup>2</sup> ${g1>=0?"+":"-"} ${Math.abs(g1)}x ${g2>=0?"+":"-"} ${Math.abs(g2)}x ${c>=0?"+":"-"} ${Math.abs(c)}
+    </div>
+
+    <div class="line">
+      ⇒ ${p}x(${r}x ${sr===1?"+":"-"} ${s}) ${sp===1?"+":"-"} ${q}(${r}x ${sr===1?"+":"-"} ${s})
+    </div>
+
+    <div class="line">
+      ⇒ (${p}x ${sp===1?"+":"-"} ${q})(${r}x ${sr===1?"+":"-"} ${s})
+    </div>
+
+    <div class="line">
+      ⇒ ${p}x ${sp===1?"+":"-"} ${q} = 0  or  ${r}x ${sr===1?"+":"-"} ${s} = 0
+    </div>
+
+    <div class="line">
+      ⇒ x = ${sp===1?(-q/p):(q/p)} , &nbsp; x = ${sr===1?(-s/r):(s/r)}
+    </div>
+
+    <div class="line answer">
+      Hence, the required factors are (${p}x ${sp===1?"+":"-"} ${q}) and (${r}x ${sr===1?"+":"-"} ${s}).
+    </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="answer";
+}
+
+/* ---------- FLOW ---------- */
+
+showQuestion();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="question") showAnswer();
+  else{
+    if(k==="y") location.reload();
+    if(k==="n") document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>";
+  }
+});
+
+})();
+</script>
+</body>
+</html>
