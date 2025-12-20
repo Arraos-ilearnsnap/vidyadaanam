@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trigonometric Evaluator (Exact Field Arithmetic)</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f4f4f9;
+    color: #111;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .card {
+    width: 100%;
+    max-width: 900px;
+    padding: 40px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #444;
+    margin: 0 0 20px 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+  }
+  .q-row {
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #007bff;
+  }
+  .line {
+    font-size: 20px;
+    margin: 12px 0;
+    line-height: 1.8;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #666;
+    margin-right: 15px;
+    min-width: 30px;
+  }
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 4px;
+    font-size: 0.9em;
+  }
+  .frac .num {
+    display: block;
+    border-bottom: 1px solid #111;
+    padding: 0 4px;
+    text-align: center;
+  }
+  .frac .den {
+    display: block;
+    padding: 2px 4px 0 4px;
+    text-align: center;
+  }
+  .box {
+    padding: 8px 16px;
+    border: 2px solid #28a745;
+    background-color: #eaffea;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+  .op {
+    margin: 0 10px;
+    color: #555;
+    font-weight: bold;
+  }
+  .prompt-msg {
+    margin-top: 30px;
+    font-size: 14px;
+    font-style: italic;
+    color: #888;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+  }
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <h1>Exact Trig Evaluator</h1>
+  <div id="content"></div>
+  <div class="prompt-msg" id="promptEl">
+    Press any key to reveal the solution.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   MATH ENGINE: Field Q(√2, √3)
+   Value = (a + b√2 + c√3 + d√6) / k
+========================================================= */
+
+function Val(a,b,c,d,k){
+  return {a,b,c,d,k};
+}
+
+function gcd(x,y){ return y?gcd(y,x%y):Math.abs(x); }
+
+function simplify(v){
+  if(v.a===0 && v.b===0 && v.c===0 && v.d===0) return Val(0,0,0,0,1);
+  // Calculate GCD of all coefficients and denominator
+  let g = gcd(gcd(gcd(gcd(Math.abs(v.a),Math.abs(v.b)),Math.abs(v.c)),Math.abs(v.d)),v.k);
+  return Val(v.a/g, v.b/g, v.c/g, v.d/g, v.k/g);
+}
+
+function add(v1,v2){
+  let k = v1.k * v2.k;
+  return simplify(Val(
+    v1.a*v2.k + v2.a*v1.k,
+    v1.b*v2.k + v2.b*v1.k,
+    v1.c*v2.k + v2.c*v1.k,
+    v1.d*v2.k + v2.d*v1.k,
+    k
+  ));
+}
+
+function sub(v1,v2){
+  // Subtraction is addition of the negative
+  return add(v1, Val(-v2.a, -v2.b, -v2.c, -v2.d, v2.k));
+}
+
+function mul(v1,v2){
+  // Multiplication in basis {1, √2, √3, √6}
+  // (a1 + b1√2...)(a2 + b2√2...)
+  return simplify(Val(
+    // Rational part: a*a + 2*b*b + 3*c*c + 6*d*d
+    v1.a*v2.a + 2*v1.b*v2.b + 3*v1.c*v2.c + 6*v1.d*v2.d,
+    // √2 part: a*b + b*a + 3(c*d + d*c)
+    v1.a*v2.b + v1.b*v2.a + 3*(v1.c*v2.d + v1.d*v2.c),
+    // √3 part: a*c + c*a + 2(b*d + d*b)
+    v1.a*v2.c + v1.c*v2.a + 2*(v1.b*v2.d + v1.d*v2.b),
+    // √6 part: a*d + d*a + b*c + c*b
+    v1.a*v2.d + v1.d*v2.a + v1.b*v2.c + v1.c*v2.b,
+    v1.k*v2.k
+  ));
+}
+
+/* =========================================================
+   DISPLAY LOGIC
+========================================================= */
+
+function fracHTML(num,den){
+  return `<div class="frac"><span class="num">${num}</span><span class="den">${den}</span></div>`;
+}
+
+function numHTML(v){
+  let s=[];
+  // FIXED: Standard mathematical order (Rational first)
+  if(v.a !== 0) s.push(`${v.a}`);
+  if(v.b !== 0) s.push(v.b===1?"√2":v.b===-1?"−√2":`${v.b}√2`);
+  if(v.c !== 0) s.push(v.c===1?"√3":v.c===-1?"−√3":`${v.c}√3`);
+  if(v.d !== 0) s.push(v.d===1?"√6":v.d===-1?"−√6":`${v.d}√6`);
+  
+  if(s.length===0) return "0";
+  
+  // Join with plus, then replace "+ -" with "- " for clean negative handling
+  return s.join(" + ").replace(/\+\s−/g,"− ");
+}
+
+function valHTML(v){
+  let n = numHTML(v);
+  return v.k === 1 ? n : fracHTML(n, v.k);
+}
+
+/* =========================================================
+   TRIG DATA
+========================================================= */
+
+const trig = {
+  sin: {
+    0:  Val(0,0,0,0,1),
+    30: Val(1,0,0,0,2),
+    45: Val(0,1,0,0,2), // √2/2
+    60: Val(0,0,1,0,2), // √3/2
+    90: Val(1,0,0,0,1)
+  },
+  cos: {
+    0:  Val(1,0,0,0,1),
+    30: Val(0,0,1,0,2),
+    45: Val(0,1,0,0,2),
+    60: Val(1,0,0,0,2),
+    90: Val(0,0,0,0,1)
+  }
+};
+
+const angles = [0,30,45,60,90];
+const funcs = ["sin","cos"];
+
+function pick(){
+  return {f:funcs[Math.floor(Math.random()*2)], a:angles[Math.floor(Math.random()*5)]};
+}
+
+/* =========================================================
+   APP LOGIC
+========================================================= */
+
+const content = document.getElementById("content");
+const promptEl = document.getElementById("promptEl");
+let stage = "q", t1a, t1b, t2a, t2b, op;
+
+function gen(){
+  t1a = pick(); t1b = pick();
+  t2a = pick(); t2b = pick();
+  op = Math.random() < 0.5 ? "+" : "−";
+}
+
+function showQ(){
+  content.innerHTML = `
+    <div class="q-row">Evaluate:</div>
+    <div class="line">
+      ${t1a.f} ${t1a.a}° · ${t1b.f} ${t1b.a}°
+      <span class="op">${op}</span>
+      ${t2a.f} ${t2a.a}° · ${t2b.f} ${t2b.a}°
+    </div>`;
+  stage = "q";
+}
+
+function showA(){
+  const A1 = trig[t1a.f][t1a.a];
+  const A2 = trig[t1b.f][t1b.a];
+  const B1 = trig[t2a.f][t2a.a];
+  const B2 = trig[t2b.f][t2b.a];
+
+  const P1 = mul(A1,A2);
+  const P2 = mul(B1,B2);
+  const R  = op === "+" ? add(P1,P2) : sub(P1,P2);
+
+  content.innerHTML = `
+    <div class="q-row">Solution:</div>
+
+    <div class="line">
+      <span class="label">Step 1</span>
+      (${valHTML(A1)})(${valHTML(A2)})
+      <span class="op">${op}</span>
+      (${valHTML(B1)})(${valHTML(B2)})
+    </div>
+
+    <div class="line">
+      <span class="label">Step 2</span>
+      ${valHTML(P1)} <span class="op">${op}</span> ${valHTML(P2)}
+    </div>
+
+    <div class="line">
+      <span class="label">Answer</span>
+      <span class="box">${valHTML(R)}</span>
+    </div>
+  `;
+  promptEl.textContent = "Press 'y' for next question or 'n' to exit.";
+  stage = "a";
+}
+
+gen(); showQ();
+
+window.addEventListener("keydown", e => {
+  const k = (e.key||"").toLowerCase();
+  if(stage === "q") { showA(); }
+  else {
+    if(k === "y"){ gen(); showQ(); promptEl.textContent = "Press any key to reveal the solution."; }
+    if(k === "n"){ content.innerHTML = "<div class='q-row'>Session ended.</div>"; promptEl.textContent = ""; }
+  }
+});
+
+})();
+</script>
+</body>
+</html>
