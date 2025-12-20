@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advanced Trig Evaluator</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 800px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #444;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+  }
+
+  /* Math Rendering Styles */
+  .math-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 20px;
+    min-height: 50px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+
+  .label {
+    font-weight: bold;
+    margin-right: 15px;
+    color: #007bff;
+    min-width: 25px;
+    font-size: 16px;
+  }
+
+  .math-group {
+    display: inline-flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 4px;
+    font-size: 0.9em;
+  }
+  .frac .num {
+    border-bottom: 1px solid #333;
+    padding: 0 4px 2px 4px;
+    text-align: center;
+    display: block;
+  }
+  .frac .den {
+    padding: 2px 4px 0 4px;
+    text-align: center;
+    display: block;
+  }
+
+  .op {
+    margin: 0 12px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .box {
+    border: 2px solid #28a745;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #eaffea;
+    font-weight: bold;
+    margin-top: 10px;
+    font-size: 22px;
+  }
+  
+  .error-box {
+    border: 2px solid #dc3545;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #ffeaea;
+    color: #a71d2a;
+    font-weight: bold;
+  }
+
+  .prompt {
+    margin-top: auto;
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .note {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <div>
+    <h1>Trigonometric Evaluator</h1>
+    <div class="note">Covers: sin, cos, tan, cot, sec, cosec for 0°, 30°, 45°, 60°, 90°</div>
+  </div>
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal solution</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let state = "question"; // question, answer
+
+// --- MATH DATA ---
+
+// Format: [numerator_coeff, root, denominator] representing (c*√r)/d
+// 'null' represents Undefined.
+const TRIG_VALUES = {
+  "sin":   { "0": [0,0,1], "30": [1,1,2], "45": [1,2,2], "60": [1,3,2], "90": [1,1,1] },
+  "cos":   { "0": [1,1,1], "30": [1,3,2], "45": [1,2,2], "60": [1,1,2], "90": [0,0,1] },
+  "tan":   { "0": [0,0,1], "30": [1,3,3], "45": [1,1,1], "60": [1,3,1], "90": null },
+  "cot":   { "0": null,    "30": [1,3,1], "45": [1,1,1], "60": [1,3,3], "90": [0,0,1] },
+  "sec":   { "0": [1,1,1], "30": [2,3,3], "45": [1,2,1], "60": [2,1,1], "90": null },
+  "cosec": { "0": null,    "30": [2,1,1], "45": [1,2,1], "60": [2,3,3], "90": [1,1,1] }
+};
+
+// --- MATH ENGINE ---
+
+function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+function lcm(a, b) { return (a === 0 || b === 0) ? 0 : Math.abs(a * b) / gcd(a, b); }
+
+// Class representing (coeff * √root) / den
+class Term {
+  constructor(coeff, root, den) {
+    this.c = coeff;
+    this.r = root; 
+    this.d = den;
+    this.simplify();
+  }
+
+  simplify() {
+    if (this.c === 0) {
+      this.r = 0; this.d = 1; return;
+    }
+    
+    // 1. Pull perfect squares from root
+    let k = 2;
+    while (k * k <= this.r) {
+      if (this.r % (k * k) === 0) {
+        this.c *= k;
+        this.r /= (k * k);
+      } else {
+        k++;
+      }
+    }
+    
+    // 2. Reduce fraction (c/d)
+    let common = gcd(this.c, this.d);
+    this.c /= common;
+    this.d /= common;
+    
+    // 3. Fix signs (keep denominator positive)
+    if (this.d < 0) { this.c *= -1; this.d *= -1; }
+  }
+  
+  // Multiply this term by another term
+  multiply(other) {
+    return new Term(
+      this.c * other.c,
+      this.r * other.r,
+      this.d * other.d
+    );
+  }
+
+  // Returns HTML string
+  toHTML() {
+    if (this.c === 0) return "0";
+    
+    // Construct numerator string
+    let numStr = "";
+    // Handle coefficient 1 or -1 when root exists
+    if (Math.abs(this.c) === 1 && this.r !== 1) {
+      numStr = (this.c === -1 ? "−" : "") + `√${this.r}`;
+    } else {
+      numStr = this.c.toString();
+      if (this.r !== 1) numStr += `√${this.r}`;
+    }
+    
+    if (this.d === 1) return numStr;
+    return `<div class="frac"><span class="num">${numStr}</span><span class="den">${this.d}</span></div>`;
+  }
+}
+
+// Helper to generate a random trig problem term
+function getTrigTerm() {
+  const funcs = ["sin", "cos", "tan", "cot", "sec", "cosec"];
+  const angles = ["0", "30", "45", "60", "90"];
+  
+  const f = funcs[Math.floor(Math.random() * funcs.length)];
+  const a = angles[Math.floor(Math.random() * angles.length)];
+  
+  const raw = TRIG_VALUES[f][a];
+  
+  // Handle undefined
+  if (raw === null) {
+    return { text: `${f} ${a}°`, isUndefined: true, term: null };
+  }
+
+  // Create Term object
+  const termObj = new Term(raw[0], raw[1], raw[2]);
+  
+  return {
+    text: `${f} ${a}°`,
+    isUndefined: false,
+    term: termObj,
+    // Store display HTML specifically for the substitution step
+    display: termObj.toHTML()
+  };
+}
+
+// --- APP STATE ---
+
+let t1, t2, t3, t4, op;
+
+function generateProblem() {
+  t1 = getTrigTerm();
+  t2 = getTrigTerm();
+  t3 = getTrigTerm();
+  t4 = getTrigTerm();
+  op = Math.random() < 0.5 ? 1 : -1;
+}
+
+function render() {
+  const opChar = op === 1 ? "+" : "−";
+
+  // 1. Question Line
+  let html = `
+    <div class="math-row">
+       <span class="label">Q.</span>
+       ${t1.text} · ${t2.text} <span class="op">${opChar}</span> ${t3.text} · ${t4.text}
+    </div>
+  `;
+
+  if (state === "answer") {
+    
+    // CHECK FOR UNDEFINED
+    if (t1.isUndefined || t2.isUndefined || t3.isUndefined || t4.isUndefined) {
+      let reasons = [];
+      if(t1.isUndefined) reasons.push(t1.text);
+      if(t2.isUndefined) reasons.push(t2.text);
+      if(t3.isUndefined) reasons.push(t3.text);
+      if(t4.isUndefined) reasons.push(t4.text);
+      
+      html += `
+        <div class="math-row">
+          <span class="label">Ans.</span>
+          <div class="error-box">Undefined</div>
+        </div>
+        <div class="math-row" style="font-size:16px; color:#a71d2a;">
+           Reason: ${reasons.join(", ")} is undefined.
+        </div>
+      `;
+      content.innerHTML = html;
+      prompt.textContent = "Press 'y' for next or 'n' to exit.";
+      return;
+    }
+
+    // 2. Substitution Line
+    html += `
+      <div class="math-row">
+        <span class="label">Step 1</span>
+        <span class="math-group">(${t1.display})(${t2.display})</span>
+        <span class="op">${opChar}</span>
+        <span class="math-group">(${t3.display})(${t4.display})</span>
+      </div>
+    `;
+
+    // 3. Multiplication Logic
+    let prod1 = t1.term.multiply(t2.term);
+    let prod2 = t3.term.multiply(t4.term);
+
+    html += `
+      <div class="math-row">
+        <span class="label">Step 2</span>
+        ${prod1.toHTML()} <span class="op">${opChar}</span> ${prod2.toHTML()}
+      </div>
+    `;
+
+    // 4. Final Addition/Subtraction Logic
+    
+    // We need to add/subtract prod1 and prod2.
+    // They might have different denominators and different roots.
+    // prod1 = (c1√r1)/d1, prod2 = (c2√r2)/d2
+    
+    const commonDenom = lcm(prod1.d, prod2.d);
+    
+    // Scale numerators to common denominator
+    let scale1 = commonDenom / prod1.d;
+    let scale2 = commonDenom / prod2.d;
+    
+    // New coefficients
+    let finalC1 = prod1.c * scale1;
+    let finalC2 = prod2.c * scale2 * op; // Apply operation sign here
+    
+    let root1 = prod1.r;
+    let root2 = prod2.r;
+    
+    let finalHTML = "";
+    
+    // Case A: Result is 0
+    if (finalC1 === 0 && finalC2 === 0) {
+      finalHTML = "0";
+    }
+    // Case B: Roots are same (Combine them)
+    else if (finalC1 !== 0 && finalC2 !== 0 && root1 === root2) {
+      let sumC = finalC1 + finalC2;
+      let resTerm = new Term(sumC, root1, commonDenom);
+      finalHTML = resTerm.toHTML();
+    }
+    // Case C: Roots differ (Keep separate in one fraction)
+    else {
+      // Logic to simplify the expression (C1√R1 + C2√R2) / CommonDenom
+      // We need the GCD of (C1, C2, CommonDenom) to simplify the whole fraction
+      
+      let parts = [];
+      if (finalC1 !== 0) parts.push({c: finalC1, r: root1});
+      if (finalC2 !== 0) parts.push({c: finalC2, r: root2});
+      
+      if (parts.length === 0) {
+        finalHTML = "0";
+      } else {
+        let valGCD = parts[0].c;
+        if(parts.length > 1) valGCD = gcd(parts[0].c, parts[1].c);
+        
+        let totalGCD = gcd(valGCD, commonDenom);
+        
+        // Build the numerator string
+        let numHTML = "";
+        parts.forEach((p, idx) => {
+          let reducedC = p.c / totalGCD;
+          let absC = Math.abs(reducedC);
+          let sign = reducedC < 0 ? "− " : "";
+          if (idx > 0) sign = reducedC < 0 ? " − " : " + ";
+          
+          let termStr = "";
+          if (absC === 1 && p.r !== 1) termStr = `√${p.r}`;
+          else if (p.r === 1) termStr = `${absC}`;
+          else termStr = `${absC}√${p.r}`;
+          
+          numHTML += sign + termStr;
+        });
+        
+        let finalDenom = commonDenom / totalGCD;
+        
+        if (finalDenom === 1) finalHTML = numHTML;
+        else finalHTML = `<div class="frac"><span class="num">${numHTML}</span><span class="den">${finalDenom}</span></div>`;
+      }
+    }
+
+    html += `
+      <div class="math-row">
+        <span class="label">Ans.</span>
+        <div class="box">${finalHTML}</div>
+      </div>
+    `;
+
+    prompt.textContent = "Press 'y' for next question or 'n' to exit.";
+  }
+
+  content.innerHTML = html;
+}
+
+// --- INIT ---
+
+generateProblem();
+render();
+
+window.addEventListener("keydown", e => {
+  const k = (e.key || "").toLowerCase();
+  
+  if (state === "question") {
+    state = "answer";
+    render();
+  } else {
+    if (k === "y") {
+      state = "question";
+      generateProblem();
+      render();
+    }
+    if (k === "n") {
+      document.getElementById("card").innerHTML = "<h1>Session Ended</h1><p>Refresh page to restart.</p>";
+      prompt.style.display = 'none';
+    }
+  }
+});
+
+})();
+</script>
+</body>
+</html>

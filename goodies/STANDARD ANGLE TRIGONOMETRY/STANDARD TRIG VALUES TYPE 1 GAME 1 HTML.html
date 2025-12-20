@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trigonometric Evaluator</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 700px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #555;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  /* Math Rendering Styles */
+  .math-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 18px;
+    min-height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .label {
+    font-weight: bold;
+    margin-right: 12px;
+    color: #007bff;
+    min-width: 20px;
+  }
+
+  .math-group {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 4px;
+  }
+  .frac .num {
+    border-bottom: 1px solid #333;
+    padding: 0 4px 2px 4px;
+    text-align: center;
+  }
+  .frac .den {
+    padding: 2px 4px 0 4px;
+    text-align: center;
+  }
+
+  .op {
+    margin: 0 8px;
+    font-weight: bold;
+  }
+  
+  .box {
+    border: 2px solid #28a745;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #eaffea;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .prompt {
+    margin-top: auto;
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+  }
+  
+  /* Utility for hidden elements to prevent layout shift */
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <h1>Trigonometric Expression Evaluator</h1>
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal solution</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let state = "question"; // question, answer
+
+// --- MATH ENGINE ---
+
+// Representation: coeff * sqrt(root)
+class Surd {
+  constructor(coeff, root) {
+    this.coeff = coeff;
+    this.root = root; 
+    this.simplify();
+  }
+
+  simplify() {
+    if (this.coeff === 0) {
+      this.root = 0;
+      return;
+    }
+    if (this.root === 0) {
+      this.coeff = 0;
+      return;
+    }
+    // Pull out perfect squares from root
+    let d = 2;
+    while (d * d <= this.root) {
+      if (this.root % (d * d) === 0) {
+        this.coeff *= d;
+        this.root /= (d * d);
+      } else {
+        d++;
+      }
+    }
+  }
+
+  // Returns HTML string
+  toHTML() {
+    if (this.coeff === 0) return "0";
+    let cStr = (this.coeff === 1 && this.root !== 1) ? "" : 
+               (this.coeff === -1 && this.root !== 1) ? "−" : this.coeff.toString();
+    
+    // Fix pure integers (root 1)
+    if (this.root === 1) return this.coeff.toString();
+
+    return `${cStr}√${this.root}`;
+  }
+}
+
+// Generates a random trig term
+// Returns { text: "sin 30°", val: Surd (numerator, assuming denominator is 2 for standard form) }
+// Note: We standardize all internal math to denominator 2.
+// sin 0 = 0/2, sin 30 = 1/2, sin 45 = √2/2, sin 60 = √3/2, sin 90 = 2/2
+function getTrigTerm() {
+  const funcs = ["sin", "cos"];
+  const angles = [0, 30, 45, 60, 90];
+  
+  const f = funcs[Math.floor(Math.random() * funcs.length)];
+  const a = angles[Math.floor(Math.random() * angles.length)];
+  
+  // Calculate numerator value for denominator 2
+  let nCoeff = 1, nRoot = 1;
+
+  if (a === 0) { nCoeff = 0; nRoot = 0; }
+  else if (a === 30) { 
+    if (f === "sin") { nCoeff = 1; nRoot = 1; } else { nCoeff = 1; nRoot = 3; } // cos30 = √3/2
+  }
+  else if (a === 45) { nCoeff = 1; nRoot = 2; } // √2/2
+  else if (a === 60) {
+    if (f === "sin") { nCoeff = 1; nRoot = 3; } else { nCoeff = 1; nRoot = 1; } // cos60 = 1/2
+  }
+  else if (a === 90) {
+    if (f === "sin") { nCoeff = 2; nRoot = 1; } else { nCoeff = 0; nRoot = 0; }
+  }
+
+  // For display, use standard textbook strings
+  // 0, 1/2, 1/√2, √3/2, 1
+  let displayHTML = "";
+  if(nCoeff === 0) displayHTML = "0";
+  else if(nCoeff === 2 && nRoot === 1) displayHTML = "1";
+  else if(nRoot === 2) displayHTML = makeFrac("1", "√2"); // Standard display preference
+  else displayHTML = makeFrac(nRoot===1?"1":`√${nRoot}`, "2");
+
+  return {
+    text: `${f} ${a}°`,
+    display: displayHTML,
+    surd: new Surd(nCoeff, nRoot)
+  };
+}
+
+// Helper to make fraction HTML
+function makeFrac(num, den) {
+  return `<div class="frac"><span class="num">${num}</span><span class="den">${den}</span></div>`;
+}
+
+// --- LOGIC ---
+
+let t1a, t1b, t2a, t2b, op;
+
+function generateProblem() {
+  t1a = getTrigTerm();
+  t1b = getTrigTerm();
+  t2a = getTrigTerm();
+  t2b = getTrigTerm();
+  op = Math.random() < 0.5 ? 1 : -1; // 1 for plus, -1 for minus
+}
+
+function render() {
+  const opChar = op === 1 ? "+" : "−";
+
+  // 1. Question Line
+  let html = `
+    <div class="math-row">
+       <span class="label">Q.</span>
+       ${t1a.text}${t1b.text} <span class="op">${opChar}</span> ${t2a.text}${t2b.text}
+    </div>
+  `;
+
+  if (state === "answer") {
+    
+    // 2. Substitution Line
+    html += `
+      <div class="math-row">
+        <span class="label">⇒</span>
+        <span class="math-group">(${t1a.display})(${t1b.display})</span>
+        <span class="op">${opChar}</span>
+        <span class="math-group">(${t2a.display})(${t2b.display})</span>
+      </div>
+    `;
+
+    // 3. Multiplication Logic
+    // Term 1 = (S1 * S2) / 4
+    let val1 = new Surd(t1a.surd.coeff * t1b.surd.coeff, t1a.surd.root * t1b.surd.root);
+    // Term 2 = (S3 * S4) / 4
+    let val2 = new Surd(t2a.surd.coeff * t2b.surd.coeff, t2a.surd.root * t2b.surd.root);
+
+    // Render Multiplication Step
+    // Since we used denominator 2 internally, the product denominator is 4. 
+    // This unifies the denominators automatically.
+    
+    let term1Str = val1.coeff === 0 ? "0" : makeFrac(val1.toHTML(), "4");
+    let term2Str = val2.coeff === 0 ? "0" : makeFrac(val2.toHTML(), "4");
+
+    html += `
+      <div class="math-row">
+        <span class="label">⇒</span>
+        ${term1Str} <span class="op">${opChar}</span> ${term2Str}
+      </div>
+    `;
+
+    // 4. Final Simplification Logic
+    
+    // We are computing: (val1 ± val2) / 4
+    // Apply operation to val2 coefficient
+    let c1 = val1.coeff;
+    let r1 = val1.root;
+    let c2 = val2.coeff * op; // Apply sign
+    let r2 = val2.root;
+
+    let finalHTML = "";
+
+    // Case A: Both are zero
+    if (c1 === 0 && c2 === 0) {
+      finalHTML = "0";
+    }
+    // Case B: Roots match (can add)
+    else if (c1 !== 0 && c2 !== 0 && r1 === r2) {
+      let combinedCoeff = c1 + c2;
+      let combined = new Surd(combinedCoeff, r1);
+      
+      // Reduce fraction with denominator 4
+      let den = 4;
+      // Simple reduction for 4 (div by 4 or 2)
+      if (combined.coeff % 4 === 0 && combined.coeff !== 0) {
+        combined.coeff /= 4; 
+        den = 1;
+      } else if (combined.coeff % 2 === 0 && combined.coeff !== 0) {
+        combined.coeff /= 2;
+        den = 2;
+      }
+
+      finalHTML = den === 1 ? combined.toHTML() : makeFrac(combined.toHTML(), den);
+    }
+    // Case C: Roots differ (cannot add) or one is zero
+    else {
+      // We have: (c1√r1 + c2√r2) / 4
+      // Check GCD of (c1, c2, 4) to reduce
+      
+      // Filter out zero terms for the final string
+      let parts = [];
+      if (c1 !== 0) parts.push({c: c1, r: r1});
+      if (c2 !== 0) parts.push({c: c2, r: r2});
+      
+      if (parts.length === 0) {
+        finalHTML = "0";
+      } else {
+        // Calculate GCD
+        const gcd = (a, b) => b === 0 ? Math.abs(a) : gcd(b, a % b);
+        let common = parts[0].c;
+        if(parts.length > 1) common = gcd(parts[0].c, parts[1].c);
+        let divisor = gcd(common, 4);
+
+        let numHTML = "";
+        parts.forEach((p, idx) => {
+          let s = new Surd(p.c / divisor, p.r);
+          let str = s.toHTML();
+          
+          // formatting sign
+          if (idx > 0 && s.coeff > 0) numHTML += " + ";
+          if (idx > 0 && s.coeff < 0) {
+             // Surd.toHTML includes minus sign, but we want spacing
+             str = str.replace("−", ""); // remove native minus
+             numHTML += " − ";
+          }
+          numHTML += str;
+        });
+
+        let newDen = 4 / divisor;
+        finalHTML = newDen === 1 ? numHTML : makeFrac(numHTML, newDen);
+      }
+    }
+
+    html += `
+      <div class="math-row">
+        <span class="label"></span>
+        <div class="box">${finalHTML}</div>
+      </div>
+    `;
+
+    prompt.textContent = "Press 'y' for next question or 'n' to exit.";
+  }
+
+  content.innerHTML = html;
+}
+
+// --- INIT ---
+
+generateProblem();
+render();
+
+window.addEventListener("keydown", e => {
+  const k = (e.key || "").toLowerCase();
+  
+  if (state === "question") {
+    state = "answer";
+    render();
+  } else {
+    if (k === "y") {
+      state = "question";
+      generateProblem();
+      render();
+    }
+    if (k === "n") {
+      document.getElementById("card").innerHTML = "<h1>Session Ended</h1><p>Refresh to start again.</p>";
+    }
+  }
+});
+
+})();
+</script>
+</body>
+</html>

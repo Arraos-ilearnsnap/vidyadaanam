@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advanced Trig Evaluator - 4 Terms</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .card {
+    background: #fff;
+    width: 100%;
+    max-width: 950px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #444;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+  }
+
+  .math-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 18px;
+    min-height: 50px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+
+  .label {
+    font-weight: bold;
+    margin-right: 15px;
+    color: #007bff;
+    min-width: 60px;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+
+  .math-group {
+    display: inline-flex;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 4px;
+    font-size: 0.9em;
+  }
+  .frac .num {
+    border-bottom: 1px solid #333;
+    padding: 0 4px 2px 4px;
+    text-align: center;
+    display: block;
+  }
+  .frac .den {
+    padding: 2px 4px 0 4px;
+    text-align: center;
+    display: block;
+  }
+
+  .op {
+    margin: 0 8px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .box {
+    border: 2px solid #28a745;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #eaffea;
+    font-weight: bold;
+    margin-top: 10px;
+    font-size: 22px;
+  }
+  
+  .error-box {
+    border: 2px solid #dc3545;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #ffeaea;
+    color: #a71d2a;
+    font-weight: bold;
+  }
+
+  .prompt {
+    margin-top: auto;
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .note {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <div>
+    <h1>Trigonometric Evaluator (4 Terms)</h1>
+    <div class="note">Covers: sin, cos, tan, cot, sec, cosec for 0°, 30°, 45°, 60°, 90°</div>
+  </div>
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal solution</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let state = "question";
+
+const TRIG_VALUES = {
+  "sin":   { "0": [0,0,1], "30": [1,1,2], "45": [1,2,2], "60": [1,3,2], "90": [1,1,1] },
+  "cos":   { "0": [1,1,1], "30": [1,3,2], "45": [1,2,2], "60": [1,1,2], "90": [0,0,1] },
+  "tan":   { "0": [0,0,1], "30": [1,3,3], "45": [1,1,1], "60": [1,3,1], "90": null },
+  "cot":   { "0": null,    "30": [1,3,1], "45": [1,1,1], "60": [1,3,3], "90": [0,0,1] },
+  "sec":   { "0": [1,1,1], "30": [2,3,3], "45": [1,2,1], "60": [2,1,1], "90": null },
+  "cosec": { "0": null,    "30": [2,1,1], "45": [1,2,1], "60": [2,3,3], "90": [1,1,1] }
+};
+
+function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+function lcm(a, b) { return (a === 0 || b === 0) ? 0 : Math.abs(a * b) / gcd(a, b); }
+
+class Term {
+  constructor(coeff, root, den) {
+    this.c = coeff; this.r = root; this.d = den;
+    this.simplify();
+  }
+  simplify() {
+    if (this.c === 0) { this.r = 0; this.d = 1; return; }
+    let k = 2;
+    while (k * k <= this.r) {
+      if (this.r % (k * k) === 0) { this.c *= k; this.r /= (k * k); } else { k++; }
+    }
+    let common = gcd(this.c, this.d);
+    this.c /= common; this.d /= common;
+    if (this.d < 0) { this.c *= -1; this.d *= -1; }
+  }
+  multiply(other) { return new Term(this.c * other.c, this.r * other.r, this.d * other.d); }
+  toHTML() {
+    if (this.c === 0) return "0";
+    let numStr = "";
+    if (Math.abs(this.c) === 1 && this.r !== 1) { numStr = (this.c === -1 ? "−" : "") + `√${this.r}`; } 
+    else { numStr = this.c.toString(); if (this.r !== 1) numStr += `√${this.r}`; }
+    if (this.d === 1) return numStr;
+    return `<div class="frac"><span class="num">${numStr}</span><span class="den">${this.d}</span></div>`;
+  }
+}
+
+function getTrigTerm() {
+  const funcs = ["sin", "cos", "tan", "cot", "sec", "cosec"];
+  const angles = ["0", "30", "45", "60", "90"];
+  const f = funcs[Math.floor(Math.random() * funcs.length)];
+  const a = angles[Math.floor(Math.random() * angles.length)];
+  const raw = TRIG_VALUES[f][a];
+  if (raw === null) return { text: `${f} ${a}°`, isUndefined: true, term: null };
+  const termObj = new Term(raw[0], raw[1], raw[2]);
+  return { text: `${f} ${a}°`, isUndefined: false, term: termObj, display: termObj.toHTML() };
+}
+
+let tArr = [], ops = [];
+
+function generateProblem() {
+  // 4 terms * 2 functions = 8 total trig calls
+  tArr = Array.from({length: 8}, getTrigTerm);
+  ops = Array.from({length: 3}, () => Math.random() < 0.5 ? 1 : -1);
+}
+
+function render() {
+  const opChars = ops.map(o => o === 1 ? "+" : "−");
+
+  let html = `<div class="math-row"><span class="label">Q.</span>` + 
+             `${tArr[0].text}·${tArr[1].text} <span class="op">${opChars[0]}</span> ` +
+             `${tArr[2].text}·${tArr[3].text} <span class="op">${opChars[1]}</span> ` +
+             `${tArr[4].text}·${tArr[5].text} <span class="op">${opChars[2]}</span> ` +
+             `${tArr[6].text}·${tArr[7].text}</div>`;
+
+  if (state === "answer") {
+    if (tArr.some(t => t.isUndefined)) {
+      html += `<div class="math-row"><span class="label">Ans.</span><div class="error-box">Undefined</div></div>`;
+      content.innerHTML = html;
+      prompt.textContent = "Press 'y' for next or 'n' to exit.";
+      return;
+    }
+
+    let p1 = tArr[0].term.multiply(tArr[1].term);
+    let p2 = tArr[2].term.multiply(tArr[3].term);
+    let p3 = tArr[4].term.multiply(tArr[5].term);
+    let p4 = tArr[6].term.multiply(tArr[7].term);
+
+    html += `<div class="math-row"><span class="label">Step 1</span>` +
+            `<span class="math-group">(${tArr[0].display})(${tArr[1].display})</span><span class="op">${opChars[0]}</span>` +
+            `<span class="math-group">(${tArr[2].display})(${tArr[3].display})</span><span class="op">${opChars[1]}</span>` +
+            `<span class="math-group">(${tArr[4].display})(${tArr[5].display})</span><span class="op">${opChars[2]}</span>` +
+            `<span class="math-group">(${tArr[6].display})(${tArr[7].display})</span></div>`;
+
+    html += `<div class="math-row"><span class="label">Step 2</span>` +
+            `${p1.toHTML()} <span class="op">${opChars[0]}</span> ${p2.toHTML()} ` +
+            `<span class="op">${opChars[1]}</span> ${p3.toHTML()} ` +
+            `<span class="op">${opChars[2]}</span> ${p4.toHTML()}</div>`;
+
+    const commonDenom = lcm(p1.d, lcm(p2.d, lcm(p3.d, p4.d)));
+    let c1 = p1.c * (commonDenom / p1.d);
+    let c2 = p2.c * (commonDenom / p2.d) * ops[0];
+    let c3 = p3.c * (commonDenom / p3.d) * ops[1];
+    let c4 = p4.c * (commonDenom / p4.d) * ops[2];
+
+    let rootMap = {};
+    [[c1, p1.r], [c2, p2.r], [c3, p3.r], [c4, p4.r]].forEach(([c, r]) => {
+      if (c !== 0) rootMap[r] = (rootMap[r] || 0) + c;
+    });
+
+    let parts = Object.entries(rootMap).filter(([r, c]) => c !== 0).map(([r, c]) => ({c, r: parseInt(r)}));
+    let finalHTML = "";
+
+    if (parts.length === 0) { finalHTML = "0"; } 
+    else {
+      let valGCD = parts.reduce((acc, curr) => gcd(acc, curr.c), commonDenom);
+      let numHTML = "";
+      parts.forEach((p, idx) => {
+        let redC = p.c / valGCD;
+        let sign = redC < 0 ? (idx === 0 ? "− " : " − ") : (idx === 0 ? "" : " + ");
+        let absC = Math.abs(redC);
+        let termStr = (absC === 1 && p.r !== 1) ? `√${p.r}` : (p.r === 1 ? `${absC}` : `${absC}√${p.r}`);
+        numHTML += sign + termStr;
+      });
+      let fDenom = commonDenom / valGCD;
+      finalHTML = (fDenom === 1) ? numHTML : `<div class="frac"><span class="num">${numHTML}</span><span class="den">${fDenom}</span></div>`;
+    }
+
+    html += `<div class="math-row"><span class="label">Ans.</span><div class="box">${finalHTML}</div></div>`;
+    prompt.textContent = "Press 'y' for next question or 'n' to exit.";
+  }
+  content.innerHTML = html;
+}
+
+generateProblem();
+render();
+
+window.addEventListener("keydown", e => {
+  const k = (e.key || "").toLowerCase();
+  if (state === "question") { state = "answer"; render(); } 
+  else {
+    if (k === "y") { state = "question"; generateProblem(); render(); }
+    if (k === "n") { document.getElementById("card").innerHTML = "<h1>Session Ended</h1>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>
