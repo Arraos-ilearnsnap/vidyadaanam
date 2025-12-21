@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surface Area – Joined Cubes (Generalised)</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{ font-size:18px; font-weight:700; margin-bottom:14px; }
+.line{ font-size:16px; margin:8px 0; line-height:1.7; }
+.box{
+  display:inline-block;
+  padding:6px 14px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+}
+.step-header{
+  font-weight:600;
+  color:#444;
+  margin-top:18px;
+  text-decoration:underline;
+}
+.prompt{
+  margin-top:16px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- DATA ---------- */
+
+const cubes = [1,2,3,4,5,6,7,8,9,10];
+const counts = [2,3,4,5,6,7,8,9,10];
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage="q", a, cubeVol, unit, n;
+
+/* ---------- GENERATOR ---------- */
+
+function gen(){
+  a = cubes[Math.floor(Math.random()*cubes.length)];
+  n = counts[Math.floor(Math.random()*counts.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+  cubeVol = a*a*a;
+}
+
+/* ---------- QUESTION ---------- */
+
+function showQ(){
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">
+      ${n} cubes, each of volume ${cubeVol} ${unit.vol}, are joined end to end to form a solid.
+      Find the surface area of the resulting cuboid.
+    </div>
+  `;
+  stage="q";
+}
+
+/* ---------- ANSWER ---------- */
+
+function showA(){
+  const tsa = 2 * a * a * (2*n + 1);
+
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+    <div class="step-header">Step 1: Find the side of each cube</div>
+    <div class="line">
+      Volume of cube = a³ = ${cubeVol} ${unit.vol}
+    </div>
+    <div class="line">
+      ⇒ a = ∛${cubeVol} = ${a} ${unit.len}
+    </div>
+
+    <div class="step-header">Step 2: Dimensions of the cuboid</div>
+    <div class="line">
+      Length (l) = a + a + … + a (${n} times) = ${n}a
+    </div>
+    <div class="line">
+      Breadth (b) = a
+    </div>
+    <div class="line">
+      Height (h) = a
+    </div>
+
+    <div class="step-header">Step 3: Total Surface Area</div>
+    <div class="line">
+      TSA = 2(lb + bh + hl)
+    </div>
+    <div class="line">
+      = 2(${n}a·a + a·a + ${n}a·a)
+    </div>
+    <div class="line">
+      = 2a²(${n} + 1 + ${n})
+    </div>
+    <div class="line">
+      = 2a²(2 × ${n} + 1)
+    </div>
+
+    <div class="step-header">Step 4: Substitute value</div>
+    <div class="line">
+      = 2 × (${a})² × (${2*n + 1})
+    </div>
+    <div class="line">
+      = <b>${tsa} ${unit.area}</b>
+    </div>
+
+    <div class="line">
+      <span class="box">
+        Surface area of the resulting cuboid = ${tsa} ${unit.area}
+      </span>
+    </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ---------- FLOW ---------- */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>
