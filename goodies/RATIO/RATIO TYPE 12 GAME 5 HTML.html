@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ratio in Simplest Form – Step by Step</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f4f6f8;
+  display:flex;
+  justify-content:center;
+}
+.card{
+  max-width:900px;
+  width:100%;
+  background:#ffffff;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:18px;
+}
+.line{
+  font-size:18px;
+  margin:8px 0;
+}
+.step{
+  font-size:18px;
+  margin:10px 0;
+}
+.frac{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  margin:0 6px;
+}
+.frac .num{
+  border-bottom:2px solid #000;
+  padding:0 6px;
+}
+.frac .den{
+  padding:0 6px;
+}
+.box{
+  display:inline-block;
+  padding:10px 18px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+  margin-top:16px;
+}
+.prompt{
+  margin-top:24px;
+  font-size:14px;
+  font-style:italic;
+  color:#555;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- PRIMES ---------------- */
+const primes = [2,3,5,7,11,13,17,19,23,29];
+
+/* ---------------- QUESTIONS (100) ---------------- */
+const questions = [
+  q => `Ravi walks ${q.A} metres and Sohan walks ${q.B} metres. Find the ratio of Ravi’s distance to Sohan’s distance.`,
+  q => `A rope is cut into two pieces of lengths ${q.A} cm and ${q.B} cm. Find their ratio.`,
+  q => `Two roads are ${q.A} km and ${q.B} km long. Find the ratio of their lengths.`,
+  q => `The height of Tower X is ${q.A} m and Tower Y is ${q.B} m. Find the ratio of their heights.`,
+  q => `A ribbon measures ${q.A} cm while another measures ${q.B} cm. Find the ratio of their lengths.`,
+  q => `A wire of length ${q.A} m and another of ${q.B} m are compared. Find the ratio.`,
+  q => `The width of two fields are ${q.A} m and ${q.B} m. Find the ratio.`,
+  q => `A classroom is ${q.A} cm long and another is ${q.B} cm long. Find the ratio.`,
+  q => `A train travels ${q.A} km on one route and ${q.B} km on another. Find the ratio.`,
+  q => `Two ladders are ${q.A} m and ${q.B} m long. Find the ratio.`,
+  q => `A bag of rice weighs ${q.A} kg and another weighs ${q.B} kg. Find the ratio.`,
+  q => `Two boxes weigh ${q.A} g and ${q.B} g. Find their ratio.`,
+  q => `A sack contains ${q.A} kg of wheat and another contains ${q.B} kg. Find the ratio.`,
+  q => `Two parcels weigh ${q.A} g and ${q.B} g. Find the ratio of their weights.`,
+  q => `A stone weighs ${q.A} kg and another weighs ${q.B} kg. Find the ratio.`,
+  q => `Two fruits weigh ${q.A} g and ${q.B} g respectively. Find the ratio.`,
+  q => `Two students study for ${q.A} minutes and ${q.B} minutes. Find the ratio.`,
+  q => `A worker works ${q.A} hours and another works ${q.B} hours. Find the ratio.`,
+  q => `A movie lasts ${q.A} minutes and another lasts ${q.B} minutes. Find the ratio.`,
+  q => `Student X scored ${q.A} marks and Student Y scored ${q.B} marks. Find the ratio.`,
+  q => `Two libraries have ${q.A} books and ${q.B} books. Find the ratio.`,
+  q => `Two factories produce ${q.A} items and ${q.B} items. Find the ratio.`,
+  q => `Two teams scored ${q.A} points and ${q.B} points. Find the ratio.`,
+  q => `A tank holds ${q.A} litres and another holds ${q.B} litres. Find the ratio.`,
+  q => `Two containers have ${q.A} litres and ${q.B} litres of milk. Find the ratio.`,
+  q => `Two halls seat ${q.A} people and ${q.B} people. Find the ratio.`,
+  q => `Two shops sold ${q.A} kg and ${q.B} kg of rice. Find the ratio.`,
+  q => `Two generators produce ${q.A} kW and ${q.B} kW of power. Find the ratio.`,
+  q => `Two stadiums have ${q.A} seats and ${q.B} seats. Find the ratio.`,
+  q => `Two hospitals treated ${q.A} patients and ${q.B} patients. Find the ratio.`
+];
+
+/* ---------------- HELPERS ---------------- */
+function gcd(a,b){ return b ? gcd(b,a%b) : a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function generatePair(){
+  let common = pick(primes);
+  let a = common, b = common;
+  let extra = Math.floor(Math.random()*3)+1;
+  for(let i=0;i<extra;i++){
+    a *= pick(primes);
+    b *= pick(primes);
+  }
+  while(a<100) a*=pick(primes);
+  while(b<100) b*=pick(primes);
+  while(a>2000) a=Math.floor(a/pick(primes));
+  while(b>2000) b=Math.floor(b/pick(primes));
+  if(gcd(a,b)===1) return generatePair();
+  return {A:a,B:b};
+}
+
+function fracHTML(n,d){
+  return `<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+}
+
+/* ---------------- FLOW ---------------- */
+const content=document.getElementById("content");
+const prompt=document.getElementById("prompt");
+let stage="q", Q;
+
+function showQ(){
+  Q = generatePair();
+  const text = pick(questions)(Q);
+  content.innerHTML = `
+    <div class="q">Find the ratio in simplest form:</div>
+    <div class="q">${text}</div>
+  `;
+  stage="q";
+}
+
+function showA(){
+  let n=Q.A, d=Q.B;
+  let html=`<div class="line"><b>Writing as fraction and simplifying:</b></div>`;
+  html+=`<div class="step">= ${fracHTML(n,d)}</div>`;
+  for(let p of primes){
+    while(n%p===0 && d%p===0){
+      html+=`<div class="step">= ${fracHTML(n+" ÷ "+p,d+" ÷ "+p)}</div>`;
+      n/=p; d/=p;
+      html+=`<div class="step">= ${fracHTML(n,d)}</div>`;
+    }
+  }
+  html+=`
+    <div class="line">
+      <span class="box">
+        So, the simplest form of the ratio ${Q.A} to ${Q.B} is ${n} to ${d}.
+      </span>
+    </div>`;
+  content.innerHTML+=html;
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y"){ showQ(); prompt.textContent="Press any key to reveal the solution."; }
+  else if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+});
+})();
+</script>
+</body>
+</html>

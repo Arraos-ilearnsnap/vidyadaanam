@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ratio in Simplest Form – Step by Step</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f4f6f8;
+  display:flex;
+  justify-content:center;
+}
+.card{
+  max-width:900px;
+  width:100%;
+  background:#ffffff;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{
+  font-size:22px;
+  font-weight:700;
+  margin-bottom:20px;
+}
+.line{
+  font-size:18px;
+  margin:8px 0;
+}
+.step{
+  font-size:18px;
+  margin:10px 0;
+}
+.frac{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  margin:0 6px;
+}
+.frac .num{
+  border-bottom:2px solid #000;
+  padding:0 6px;
+}
+.frac .den{
+  padding:0 6px;
+}
+.box{
+  display:inline-block;
+  padding:10px 18px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+  margin-top:16px;
+}
+.prompt{
+  margin-top:24px;
+  font-size:14px;
+  font-style:italic;
+  color:#555;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* -------- PRIME SET (STRICTLY LIMITED) -------- */
+const primes = [2,3,5,7,11,13,17,19,23,29];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage = "q";
+let A, B;
+
+/* ---------- HELPERS ---------- */
+
+function gcd(a,b){ return b ? gcd(b,a%b) : a; }
+
+function randomFrom(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+/* 
+ Generate numbers:
+ - Range: 100 to 2000
+ - Built ONLY from allowed primes
+ - Guaranteed HCF > 1
+*/
+function randomPair(){
+  let common = randomFrom(primes);        // common factor (ensures HCF > 1)
+
+  let a = common;
+  let b = common;
+
+  const extraFactors = Math.floor(Math.random()*3) + 1;
+
+  for(let i=0;i<extraFactors;i++){
+    a *= randomFrom(primes);
+    b *= randomFrom(primes);
+  }
+
+  // force range 100–2000
+  while(a < 100) a *= randomFrom(primes);
+  while(b < 100) b *= randomFrom(primes);
+
+  while(a > 2000) a = Math.floor(a / randomFrom(primes));
+  while(b > 2000) b = Math.floor(b / randomFrom(primes));
+
+  // safety net
+  if(gcd(a,b) === 1) return randomPair();
+
+  return [a,b];
+}
+
+function fracHTML(n,d){
+  return `<span class="frac"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+}
+
+/* ---------- QUESTION ---------- */
+
+function showQ(){
+  [A,B] = randomPair();
+  content.innerHTML = `
+    <div class="q">
+      Find the following ratio in simplest form:
+    </div>
+    <div class="q">
+      ${A} to ${B}
+    </div>
+  `;
+  stage = "q";
+}
+
+/* ---------- SOLUTION ---------- */
+
+function showA(){
+  let html = `
+    <div class="line"><b>Writing as fraction and simplifying:</b></div>
+  `;
+
+  let n = A;
+  let d = B;
+
+  html += `<div class="step">= ${fracHTML(n,d)}</div>`;
+
+  for(let p of primes){
+    while(n % p === 0 && d % p === 0){
+      html += `
+        <div class="step">
+          = ${fracHTML(n + " ÷ " + p, d + " ÷ " + p)}
+        </div>
+      `;
+      n /= p;
+      d /= p;
+      html += `<div class="step">= ${fracHTML(n,d)}</div>`;
+    }
+  }
+
+  html += `
+    <div class="line">
+      <span class="box">
+        So, the simplest form of the ratio ${A} to ${B} is ${n} to ${d}.
+      </span>
+    </div>
+  `;
+
+  content.innerHTML += html;
+  prompt.textContent = "Press y for next question or n to exit.";
+  stage = "a";
+}
+
+/* ---------- FLOW ---------- */
+
+showQ();
+
+window.addEventListener("keydown", e=>{
+  const k = (e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>
