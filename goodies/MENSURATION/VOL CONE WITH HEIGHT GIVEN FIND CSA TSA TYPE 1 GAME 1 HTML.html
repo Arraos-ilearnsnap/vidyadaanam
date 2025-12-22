@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cone – Surface Areas from Volume</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{ font-size:18px; font-weight:700; margin-bottom:14px; }
+.line{ font-size:16px; margin:6px 0; line-height:1.7; }
+.step-header{
+  font-weight:600;
+  color:#444;
+  margin-top:20px;
+  text-decoration:underline;
+}
+.box{
+  display:inline-block;
+  padding:8px 16px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+}
+.prompt{
+  margin-top:18px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const radii = Array.from({length:15},(_,i)=>i+1);
+const heights = Array.from({length:15},(_,i)=>i+1);
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const questions = [
+  (V,H,u)=>`The volume of a cone is ${V} ${u.vol} and the height of the cone is ${H} ${u.len}. Find (i) curved surface area and (ii) total surface area of the cone.`,
+  (V,H,u)=>`A cone has volume ${V} ${u.vol} and height ${H} ${u.len}. Determine its curved surface area and total surface area.`,
+  (V,H,u)=>`Given a cone whose volume is ${V} ${u.vol} and height is ${H} ${u.len}, calculate the curved surface area and total surface area.`
+];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage="q", R, H, Vnum, Vden, Vmixed, unit;
+
+/* ===================== HELPERS ===================== */
+
+function mixedFraction(n,d){
+  const w = Math.floor(n/d);
+  const r = n % d;
+  if(r===0) return `${w}`;
+  if(w===0) return `${r}/${d}`;
+  return `${w} ${r}/${d}`;
+}
+
+function r2(x){
+  return Math.round(x*100)/100;
+}
+
+/* ===================== GENERATOR ===================== */
+
+function gen(){
+  R = radii[Math.floor(Math.random()*radii.length)];
+  H = heights[Math.floor(Math.random()*heights.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+
+  Vnum = 22 * R * R * H;
+  Vden = 21;
+  Vmixed = mixedFraction(Vnum, Vden);
+}
+
+/* ===================== QUESTION ===================== */
+
+function showQ(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">${q(Vmixed,H,unit)}</div>
+  `;
+  stage="q";
+}
+
+/* ===================== SOLUTION ===================== */
+
+function showA(){
+  const r = R;
+  const h = H;
+  const l = Math.sqrt(r*r + h*h);
+
+  const CSA = r2((22/7) * r * l);
+  const TSA = r2(CSA + (22/7)*r*r);
+
+  content.innerHTML += `
+  <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+  <div class="step-header">Step 1: Find the radius of the cone</div>
+  <div class="line">Volume of cone = one-third of volume of cylinder</div>
+  <div class="line">⇒ (1/3)πr²h = V</div>
+  <div class="line">⇒ (1/3) × (22/7) × r² × ${H} = ${Vnum}/${Vden}</div>
+  <div class="line">⇒ r² = (${Vnum} × 3 × 7) / (22 × ${H})</div>
+  <div class="line">⇒ r² = ${R*R}</div>
+  <div class="line">⇒ r = √(${R*R})  (Taking square root on both sides)</div>
+  <div class="line">⇒ r = ${R} ${unit.len}</div>
+
+  <div class="step-header">Step 2: Slant height of cone</div>
+  <div class="line">Slant height of cone = √(h² + r²)</div>
+  <div class="line">= √(${H}² + ${R}²)</div>
+  <div class="line">= √(${H*H + R*R})</div>
+  <div class="line">= ${r2(l)} ${unit.len}</div>
+
+  <div class="step-header">Step 3: Curved surface area of cone</div>
+  <div class="line">Curved surface area of cone = πrl</div>
+  <div class="line">= (22/7) × r × l</div>
+  <div class="line">= (22/7) × ${R} × ${r2(l)}</div>
+  <div class="line">= ${CSA} ${unit.area}</div>
+
+  <div class="step-header">Step 4: Total surface area of cone</div>
+  <div class="line">Total surface area of cone = curved surface area + circular base area</div>
+  <div class="line">= πrl + πr²</div>
+  <div class="line">= πr(l + r)</div>
+  <div class="line">= (22/7) × ${R} × (${r2(l)} + ${R})</div>
+  <div class="line">= ${TSA} ${unit.area}</div>
+
+  <div class="line">
+    <span class="box">
+      Curved surface area = ${CSA} ${unit.area}, Total surface area = ${TSA} ${unit.area}
+    </span>
+  </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ===================== FLOW ===================== */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>

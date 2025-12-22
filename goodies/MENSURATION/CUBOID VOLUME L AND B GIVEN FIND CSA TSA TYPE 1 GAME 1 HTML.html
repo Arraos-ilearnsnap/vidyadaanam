@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuboid – Surface Areas from Volume</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background:#f4f4f9;
+  color:#222;
+}
+.card{
+  max-width:800px;
+  margin:auto;
+  padding:32px;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 12px 32px rgba(0,0,0,0.1);
+}
+.q{ 
+  font-size:20px; 
+  font-weight:700; 
+  margin-bottom:20px; 
+  color: #111;
+  border-left: 5px solid #007bff;
+  padding-left: 15px;
+}
+.line{ 
+  font-size:17px; 
+  margin:10px 0; 
+  line-height:1.8; 
+  color: #333;
+}
+.step-header{
+  font-weight:700;
+  color:#d63384; /* A distinct color for headers */
+  margin-top:28px;
+  margin-bottom: 12px;
+  font-size: 18px;
+  text-decoration: underline;
+  text-decoration-color: #eee;
+  text-underline-offset: 4px;
+}
+.box{
+  display:inline-block;
+  padding:12px 20px;
+  border:2px solid #333;
+  border-radius: 8px;
+  font-weight:700;
+  background-color:#fffbea;
+  margin-top: 15px;
+  font-size: 18px;
+}
+.frac {
+  display: inline-block;
+  vertical-align: middle;
+  text-align: center;
+  margin: 0 5px;
+}
+.frac .num {
+  display: block;
+  border-bottom: 2px solid #333;
+  padding: 0 5px;
+}
+.frac .den {
+  display: block;
+  padding: 0 5px;
+}
+.prompt{
+  margin-top:24px;
+  font-size:14px;
+  font-style:italic;
+  color:#666;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const nums = Array.from({length:15},(_,i)=>i+1);
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const questions = [
+  (V,L,B,u)=>`The volume of cuboid is ${V}${u.vol} and its length is ${L}${u.len} and breadth is ${B}${u.len}. Find (i) curved surface area (ii) total surface area of the cuboid.`,
+  (V,L,B,u)=>`Given a cuboid with volume ${V}${u.vol}, length ${L}${u.len}, and breadth ${B}${u.len}. Calculate its (i) curved surface area and (ii) total surface area.`,
+  (V,L,B,u)=>`A cuboid has a volume of ${V}${u.vol}. If the length is ${L}${u.len} and the breadth is ${B}${u.len}, determine the curved surface area and total surface area.`
+];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage="q", L, B, H, V, unit;
+
+/* ===================== GENERATOR ===================== */
+
+function gen(){
+  L = nums[Math.floor(Math.random()*nums.length)];
+  B = nums[Math.floor(Math.random()*nums.length)];
+  H = nums[Math.floor(Math.random()*nums.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+  V = L * B * H;
+}
+
+/* ===================== QUESTION ===================== */
+
+function showQ(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">${q(V,L,B,unit)}</div>
+  `;
+  stage="q";
+}
+
+/* ===================== SOLUTION ===================== */
+
+function showA(){
+  // Calculations
+  const LB = L * B;
+  const L_plus_B = L + B;
+  const H_times_Sum = H * L_plus_B;
+  const CSA = 2 * H_times_Sum; // or 2 * H * (L+B)
+  
+  const term1 = L * B;
+  const term2 = B * H;
+  const term3 = L * H;
+  const sum_terms = term1 + term2 + term3;
+  const TSA = 2 * sum_terms;
+
+  content.innerHTML += `
+  <hr style="border:0;border-top:1px solid #ddd;margin:25px 0;">
+
+  <div class="step-header">Step 1: Find the height of the cuboid</div>
+  <div class="line">Volume of cuboid = lbh = V</div>
+  <div class="line">⇒ ${L} × ${B} × h = ${V}</div>
+  <div class="line">⇒ h = <span class="frac"><span class="num">V</span><span class="den">L × B</span></span></div>
+  <div class="line">⇒ h = <span class="frac"><span class="num">${V}</span><span class="den">${L} × ${B}</span></span></div>
+  <div class="line">⇒ h = <span class="frac"><span class="num">${V}</span><span class="den">${LB}</span></span></div>
+  <div class="line">⇒ h = ${H} ${unit.len}</div>
+
+  <div class="step-header">Step 2: Curved surface area (CSA) of cuboid</div>
+  <div class="line">The curved surface area of cuboid = area of 4 walls of cuboid</div>
+  <div class="line">= 2 × (front wall + side wall)</div>
+  <div class="line">= 2 × (lh + bh)</div>
+  <div class="line">= 2 × h (l + b)</div>
+  <div class="line">= 2 × H (L + B)</div>
+  <div class="line">= 2 × ${H} (${L} + ${B})</div>
+  <div class="line">= 2 × ${H} (${L_plus_B})</div>
+  <div class="line">= 2 × ${H_times_Sum}</div>
+  <div class="line">= ${CSA} ${unit.area}</div>
+
+  <div class="step-header">Step 3: Total surface area (TSA) of cuboid</div>
+  <div class="line">The total surface area of cuboid = curved surface area of cuboid</div>
+  <div class="line">+ area of top rectangle (ceiling)</div>
+  <div class="line">+ area of bottom rectangle (floor)</div>
+  <div class="line">= 2(lh + bh) + lb + lb</div>
+  <div class="line">= 2(lh + bh) + 2lb</div>
+  <div class="line">= 2(lb + bh + lh)</div>
+  <div class="line">= 2(L×B + B×H + L×H)</div>
+  <div class="line">= 2(${L}×${B} + ${B}×${H} + ${L}×${H})</div>
+  <div class="line">= 2(${term1} + ${term2} + ${term3})</div>
+  <div class="line">= 2(${sum_terms})</div>
+  <div class="line">= ${TSA} ${unit.area}</div>
+
+  <div class="line" style="margin-top:20px; text-align:center;">
+    The curved surface area and total surface area of given cuboid are<br>
+    <span class="box">
+      ${CSA} ${unit.area} and ${TSA} ${unit.area} respectively.
+    </span>
+  </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ===================== FLOW ===================== */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>

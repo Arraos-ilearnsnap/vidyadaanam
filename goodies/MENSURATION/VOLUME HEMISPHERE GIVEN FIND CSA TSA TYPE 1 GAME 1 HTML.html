@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hemisphere – Surface Area from Volume</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{ font-size:18px; font-weight:700; margin-bottom:14px; }
+.line{ font-size:16px; margin:8px 0; line-height:1.7; }
+.step-header{
+  font-weight:600;
+  color:#444;
+  margin-top:18px;
+  text-decoration:underline;
+}
+.box{
+  display:inline-block;
+  padding:6px 14px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+}
+.prompt{
+  margin-top:16px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const radii = [1,2,3,4,5,6,7,8,9,10,11];
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const questions = [
+  V => `The volume of a solid hemisphere is ${V}. Find (i) its curved surface area and (ii) its total surface area.`,
+  V => `A hemisphere has volume ${V}. Calculate its curved surface area as well as its total surface area.`,
+  V => `The volume enclosed by a hemispherical solid is ${V}. Determine the curved surface area and the total surface area of the hemisphere.`
+];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage="q", r, V_mixed, V_num, V_den, unit;
+
+/* ===================== HELPERS ===================== */
+
+function mixedFraction(n,d){
+  const w = Math.floor(n/d);
+  const rem = n % d;
+  if(rem === 0) return `${w}`;
+  if(w === 0) return `${rem}/${d}`;
+  return `${w} ${rem}/${d}`;
+}
+
+function round3(x){
+  return Math.round(x*1000)/1000;
+}
+
+/* ===================== GENERATOR ===================== */
+
+function gen(){
+  r = radii[Math.floor(Math.random()*radii.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+
+  // V = (2/3)πr³ using π = 22/7
+  V_num = 2 * 22 * r * r * r;
+  V_den = 3 * 7;
+  V_mixed = mixedFraction(V_num, V_den);
+}
+
+/* ===================== QUESTION ===================== */
+
+function showQ(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">${q(V_mixed + " " + unit.vol)}</div>
+  `;
+  stage="q";
+}
+
+/* ===================== SOLUTION ===================== */
+
+function showA(){
+  const AC = round3((22/7)*r*r);
+  const CSA = round3(2*AC);
+  const TSA = round3(3*AC);
+
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+    <div class="step-header">Step 1: Find the radius of the hemisphere</div>
+    <div class="line">
+      Volume of hemisphere = (2/3)πr³
+    </div>
+    <div class="line">
+      ⇒ (2/3) × (22/7) × r³ = ${V_num}/${V_den} ${unit.vol}
+    </div>
+    <div class="line">
+      ⇒ πr³ = (${V_num}/${V_den}) × 3 / 2
+    </div>
+    <div class="line">
+      ⇒ (22/7) × r³ = (${V_num} × 3) / (${V_den} × 2)
+    </div>
+    <div class="line">
+      ⇒ r³ = (${V_num} × 3 × 7) / (2 × 22 × ${V_den})
+    </div>
+    <div class="line">
+      ⇒ r = ∛(${r*r*r}) = ${r} ${unit.len}
+    </div>
+
+    <div class="step-header">Step 2: Area of circular base (AC)</div>
+    <div class="line">
+      Area of circle = πr²
+    </div>
+    <div class="line">
+      = (22/7) × ${r} × ${r}
+    </div>
+    <div class="line">
+      = ${AC} ${unit.area}
+    </div>
+
+    <div class="step-header">Step 3: Curved Surface Area of hemisphere</div>
+    <div class="line">
+      Curved surface area = Twice the area of circle
+    </div>
+    <div class="line">
+      = 2πr²
+    </div>
+    <div class="line">
+      = 2 × ${AC}
+    </div>
+    <div class="line">
+      = ${CSA} ${unit.area}
+    </div>
+
+    <div class="step-header">Step 4: Total Surface Area of hemisphere</div>
+    <div class="line">
+      Total surface area = Curved surface area + Circular base area
+    </div>
+    <div class="line">
+      = 2πr² + πr²
+    </div>
+    <div class="line">
+      = 3πr²
+    </div>
+    <div class="line">
+      = 3 × ${AC}
+    </div>
+    <div class="line">
+      = ${TSA} ${unit.area}
+    </div>
+
+    <div class="line">
+      <span class="box">
+        Curved surface area = ${CSA} ${unit.area}, Total surface area = ${TSA} ${unit.area}
+      </span>
+    </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ===================== FLOW ===================== */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>

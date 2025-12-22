@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surface Area – Stacked Cylinders</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{ font-size:18px; font-weight:700; margin-bottom:14px; }
+.line{ font-size:16px; margin:8px 0; line-height:1.7; }
+.step-header{
+  font-weight:600;
+  color:#444;
+  margin-top:18px;
+  text-decoration:underline;
+}
+.box{
+  display:inline-block;
+  padding:6px 14px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+}
+.prompt{
+  margin-top:16px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const radii = [7,14,21,28,35,42,49,56,63,70];
+const heights = [1,2,3,4,5,6,7,8,9,10];
+const counts = [2,3,4,5,6,7,8,9,10];
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const questions = [
+  (x,V,R,u)=>`${x} identical cylinders, each having volume ${V} ${u.vol} and radius ${R} ${u.len}, are stacked one above the other to form a single cylinder. Find the total surface area of the resulting cylinder.`,
+  (x,V,R,u)=>`A solid is formed by placing ${x} congruent cylinders vertically. Each cylinder has volume ${V} ${u.vol} and radius ${R} ${u.len}. Calculate the surface area of the combined solid.`,
+  (x,V,R,u)=>`${x} cylinders of radius ${R} ${u.len} and volume ${V} ${u.vol} are arranged lengthwise. Determine the total surface area of the new cylinder formed.`
+];
+
+const content=document.getElementById("content");
+const prompt=document.getElementById("prompt");
+
+let stage="q", R, h, x, V, unit;
+
+/* ===================== GENERATOR ===================== */
+
+function gen(){
+  R = radii[Math.floor(Math.random()*radii.length)];
+  h = heights[Math.floor(Math.random()*heights.length)];
+  x = counts[Math.floor(Math.random()*counts.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+
+  V = (22/7)*R*R*h;
+}
+
+/* ===================== QUESTION ===================== */
+
+function showQ(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">${q(x,V,R,unit)}</div>
+  `;
+  stage="q";
+}
+
+/* ===================== SOLUTION ===================== */
+
+function showA(){
+  const H = x*h;
+  const TSA = 2*(22/7)*R*(R+H);
+
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+    <div class="step-header">Step 1: Find the height of one cylinder</div>
+    <div class="line">
+      Volume of cylinder = πR²h = ${V} ${unit.vol}
+    </div>
+    <div class="line">
+      ⇒ (22/7) × ${R}² × h = ${V}
+    </div>
+    <div class="line">
+      ⇒ R²h = (7 × ${V}) / 22
+    </div>
+    <div class="line">
+      ⇒ h = (7 × ${V}) / (22 × ${R} × ${R})
+    </div>
+    <div class="line">
+      ⇒ h = ${h} ${unit.len}
+    </div>
+
+    <div class="step-header">Step 2: Total height of the new cylinder</div>
+    <div class="line">
+      Total height = h + h + h + … + h (${x} times)
+    </div>
+    <div class="line">
+      ⇒ Total height = ${x}h
+    </div>
+    <div class="line">
+      ⇒ Total height = ${x} × ${h} = ${H} ${unit.len}
+    </div>
+
+    <div class="step-header">Step 3: Total Surface Area</div>
+    <div class="line">
+      TSA = Top + Base + Curved Surface Area
+    </div>
+    <div class="line">
+      = πR² + πR² + 2πR(H)
+    </div>
+    <div class="line">
+      = 2πR² + 2πRH
+    </div>
+    <div class="line">
+      = 2πR(R + H)
+    </div>
+    <div class="line">
+      = 2 × (22/7) × ${R} × (${R} + ${H})
+    </div>
+
+    <div class="step-header">Step 4: Substitute values</div>
+    <div class="line">
+      = <b>${TSA} ${unit.area}</b>
+    </div>
+
+    <div class="line">
+      <span class="box">
+        Total surface area of the resulting cylinder = ${TSA} ${unit.area}
+      </span>
+    </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ===================== FLOW ===================== */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>

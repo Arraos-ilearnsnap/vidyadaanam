@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cylinder – Surface Area from Volume</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#ffffff;
+  color:#111;
+}
+.card{
+  max-width:900px;
+  margin:auto;
+  padding:28px;
+  border-radius:12px;
+  box-shadow:0 8px 26px rgba(0,0,0,0.08);
+}
+.q{ font-size:18px; font-weight:700; margin-bottom:14px; }
+.line{ font-size:16px; margin:8px 0; line-height:1.7; }
+.step-header{
+  font-weight:600;
+  color:#444;
+  margin-top:18px;
+  text-decoration:underline;
+}
+.box{
+  display:inline-block;
+  padding:6px 14px;
+  border:2px solid #111;
+  font-weight:700;
+  background:#f9f9f9;
+}
+.prompt{
+  margin-top:16px;
+  font-size:13px;
+  font-style:italic;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution. After reveal press <b>y</b> for next or <b>n</b> to exit.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ===================== DATA ===================== */
+
+const radii = [1,2,3,4,5,6,7,8,9,10,11];
+const heights = [1,2,3,4,5,6,7,8,9,10];
+
+const units = [
+  {vol:"mm³", len:"mm", area:"mm²"},
+  {vol:"cm³", len:"cm", area:"cm²"},
+  {vol:"m³",  len:"m",  area:"m²"}
+];
+
+const questions = [
+  (V,R,u)=>`The volume of a cylinder is ${V} ${u.vol} and its radius is ${R} ${u.len}. Find (i) its curved surface area and (ii) its total surface area.`,
+  (V,R,u)=>`A solid right circular cylinder has volume ${V} ${u.vol} and radius ${R} ${u.len}. Determine its curved surface area and total surface area.`,
+  (V,R,u)=>`Given a cylinder of radius ${R} ${u.len} with volume ${V} ${u.vol}, calculate its curved surface area and its total surface area.`
+];
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+
+let stage="q", R, h, V_num, V_den, V_mixed, unit;
+
+/* ===================== HELPERS ===================== */
+
+function mixedFraction(n,d){
+  const w = Math.floor(n/d);
+  const r = n % d;
+  if(r===0) return `${w}`;
+  if(w===0) return `${r}/${d}`;
+  return `${w} ${r}/${d}`;
+}
+
+function r3(x){
+  return Math.round(x*1000)/1000;
+}
+
+/* ===================== GENERATOR ===================== */
+
+function gen(){
+  R = radii[Math.floor(Math.random()*radii.length)];
+  h = heights[Math.floor(Math.random()*heights.length)];
+  unit = units[Math.floor(Math.random()*units.length)];
+
+  V_num = 22 * R * R * h;
+  V_den = 7;
+  V_mixed = mixedFraction(V_num, V_den);
+}
+
+/* ===================== QUESTION ===================== */
+
+function showQ(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+  content.innerHTML = `
+    <div class="q">Question:</div>
+    <div class="line">${q(V_mixed, R, unit)}</div>
+  `;
+  stage="q";
+}
+
+/* ===================== SOLUTION ===================== */
+
+function showA(){
+  const C = r3(2 * (22/7) * R);
+  const CSA = r3(C * h);
+  const TSA = r3(2 * (22/7) * R * (h + R));
+
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+
+    <div class="step-header">Step 1: Find the height of the cylinder</div>
+    <div class="line">Volume of cylinder = Area of circular base × height</div>
+    <div class="line">⇒ πR²h = V</div>
+    <div class="line">⇒ (22/7) × (${R})² × h = ${V_num}/${V_den}</div>
+    <div class="line">⇒ R²h = (${V_num} × 7) / 22</div>
+    <div class="line">⇒ h = (${V_num} × 7) / (22 × ${R} × ${R})</div>
+    <div class="line">⇒ h = ${h} ${unit.len}</div>
+
+    <div class="step-header">Step 2: Circumference of the circular base (C)</div>
+    <div class="line">Circumference of circle = 2πR</div>
+    <div class="line">= 2 × (22/7) × ${R}</div>
+    <div class="line">= ${C} ${unit.len}</div>
+
+    <div class="step-header">Step 3: Curved Surface Area of cylinder</div>
+    <div class="line">Curved surface area = Perimeter of base × height</div>
+    <div class="line">= C × h</div>
+    <div class="line">= ${C} × ${h}</div>
+    <div class="line">= ${CSA} ${unit.area}</div>
+
+    <div class="step-header">Step 4: Total Surface Area of cylinder</div>
+    <div class="line">Total surface area = Curved surface area + Top area + Bottom area</div>
+    <div class="line">= C × h + πR² + πR²</div>
+    <div class="line">= 2πRh + 2πR²</div>
+    <div class="line">= 2πR(h + R)</div>
+    <div class="line">= C(h + R)</div>
+    <div class="line">= ${C} × (${h} + ${R})</div>
+    <div class="line">= ${TSA} ${unit.area}</div>
+
+    <div class="line">
+      <span class="box">
+        Curved surface area = ${CSA} ${unit.area}, Total surface area = ${TSA} ${unit.area}
+      </span>
+    </div>
+  `;
+
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ===================== FLOW ===================== */
+
+gen(); showQ();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else{
+    if(k==="y"){ gen(); showQ(); prompt.textContent="Press any key to reveal the solution."; }
+    if(k==="n"){ document.getElementById("card").innerHTML="<div class='q'>Session ended.</div>"; }
+  }
+});
+})();
+</script>
+</body>
+</html>
