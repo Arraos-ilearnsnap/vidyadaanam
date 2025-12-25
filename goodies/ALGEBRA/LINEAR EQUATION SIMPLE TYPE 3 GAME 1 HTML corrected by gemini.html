@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver – Step by Step</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f0f2f5;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  user-select:none;
+}
+.card{
+  max-width:850px;
+  width:100%;
+  background:#ffffff;
+  padding:32px;
+  border-radius:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.12);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6c757d;
+  margin-bottom:10px;
+}
+.q-text{
+  font-size:32px;
+  font-weight:800;
+  text-align:center;
+  padding:24px;
+  background:#f8f9fa;
+  border-left:8px solid #007bff;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+.step{
+  font-size:20px;
+  margin:18px 0;
+  font-family:Consolas, monospace;
+  line-height: 1.6;
+}
+.note{
+  font-size:15px;
+  color:#1565c0;
+  font-weight: bold;
+  background: #e3f2fd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left:10px;
+}
+.final{
+  margin-top:25px;
+  padding:18px;
+  background:#e8f5e9;
+  border:2px solid #a5d6a7;
+  border-radius:12px;
+  font-size:24px;
+  font-weight:800;
+  text-align:center;
+  color:#2e7d32;
+}
+.prompt{
+  margin-top:30px;
+  font-size:14px;
+  text-align:center;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key or click to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let stage="q";
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+let a, b, c, x, form, eq;
+
+function generate(){
+  // Range updated to 1-50 as requested
+  a = rand(1, 50); 
+  b = rand(1, 50);
+  x = rand(1, 20); // Keep solution reasonable for mental check
+  
+  form = rand(1, 4);
+
+  // Logic to ensure C is calculated based on the form to keep X an integer
+  if (form === 1 || form === 3) {
+      // For ax - b = c
+      c = a * x - b;
+  } else {
+      // For b - ax = c
+      c = b - a * x;
+  }
+
+  // To keep results clean for a basic solver, we regenerate if c is too large or negative
+  // unless you want to support negative results.
+  if(c < -100 || c > 500){ generate(); return; }
+
+  if(form===1) eq = `${a}x - ${b} = ${c}`;
+  if(form===2) eq = `${b} - ${a}x = ${c}`;
+  if(form===3) eq = `${c} = ${a}x - ${b}`;
+  if(form===4) eq = `${c} = ${b} - ${a}x`;
+}
+
+function showQ(){
+  generate();
+  content.innerHTML = `
+    <div class="q-header">Solve for x:</div>
+    <div class="q-text">${eq}</div>
+  `;
+  prompt.innerHTML = `Press any key or click to reveal the solution.`;
+  stage="q";
+}
+
+function showA(){
+  let steps = "";
+
+  if(form===1 || form===3){
+    steps += `<div class="step">1. Add ${b} to both sides:<br> &nbsp; ${a}x = ${c} + ${b}</div>`;
+    steps += `<div class="step">2. Simplify:<br> &nbsp; ${a}x = ${a*x}</div>`;
+    steps += `<div class="step">3. Divide by ${a}:<br> &nbsp; x = ${a*x} / ${a}</div>`;
+  }
+
+  if(form===2 || form===4){
+    steps += `<div class="step">1. Subtract ${b} from both sides:<br> &nbsp; -${a}x = ${c} - ${b}</div>`;
+    steps += `<div class="step">2. Simplify:<br> &nbsp; -${a}x = ${c-b}</div>`;
+    steps += `<div class="step">3. Divide by -${a}:<br> &nbsp; x = ${c-b} / -${a}</div>`;
+  }
+
+  content.innerHTML += `
+    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+    ${steps}
+    <div class="final">∴ x = ${x}</div>
+  `;
+  prompt.innerHTML = `Press <b>Y</b> for next problem or <b>N</b> to exit.`;
+  stage="a";
+}
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y") showQ();
+  else if(k==="n") document.getElementById("card").innerHTML="<h2 style='text-align:center'>Session Ended</h2>";
+});
+
+document.body.addEventListener("click",()=>{
+  if(stage==="q") showA();
+});
+
+showQ();
+})();
+</script>
+</body>
+</html>

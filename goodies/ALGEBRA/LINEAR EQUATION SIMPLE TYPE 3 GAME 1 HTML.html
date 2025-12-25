@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver – Step by Step</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f0f2f5;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  user-select:none;
+}
+.card{
+  max-width:850px;
+  width:100%;
+  background:#ffffff;
+  padding:32px;
+  border-radius:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.12);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6c757d;
+  margin-bottom:10px;
+}
+.q-text{
+  font-size:32px;
+  font-weight:800;
+  text-align:center;
+  padding:24px;
+  background:#f8f9fa;
+  border-left:8px solid #007bff;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+.step{
+  font-size:22px;
+  margin:14px 0;
+  font-family:Consolas, monospace;
+}
+.note{
+  font-size:15px;
+  color:#1565c0;
+  font-style:italic;
+  margin-left:10px;
+}
+.final{
+  margin-top:25px;
+  padding:18px;
+  background:#e8f5e9;
+  border:2px solid #a5d6a7;
+  border-radius:12px;
+  font-size:22px;
+  font-weight:800;
+  text-align:center;
+  color:#2e7d32;
+}
+.prompt{
+  margin-top:30px;
+  font-size:14px;
+  text-align:center;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let stage="q";
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+/* ---------- GENERATE EQUATION ---------- */
+let a,b,c,x,form,eq;   // ✅ FIX: eq declared
+
+function generate(){
+  a = rand(1,10);                // coefficient
+  x = rand(0,20);                // solution (non-negative)
+  b = rand(1,20);                // constant
+  c = a*x - b;                   // RHS
+
+  if(c < 0){ generate(); return; }
+
+  form = rand(1,4);
+
+  if(form===1) eq = `${a}x - ${b} = ${c}`;
+  if(form===2) eq = `${b} - ${a}x = ${c}`;
+  if(form===3) eq = `${c} = ${a}x - ${b}`;
+  if(form===4) eq = `${c} = ${b} - ${a}x`;
+}
+
+/* ---------- SHOW QUESTION ---------- */
+function showQ(){
+  generate();
+  content.innerHTML = `
+    <div class="q-header">Solve:</div>
+    <div class="q-text">${eq}</div>
+  `;
+  stage="q";
+}
+
+/* ---------- SHOW SOLUTION ---------- */
+function showA(){
+  let steps = "";
+
+  if(form===1 || form===3){
+    steps += `<div class="step">⇒ ${a}x - ${b} + ${b} = ${c} + ${b} <span class="note">(Add ${b} on both sides)</span></div>`;
+    steps += `<div class="step">⇒ ${a}x = ${a*x}</div>`;
+    steps += `<div class="step">⇒ ${a}x / ${a} = ${a*x} / ${a} <span class="note">(Divide by ${a} on both sides)</span></div>`;
+    steps += `<div class="step">⇒ x = ${x}</div>`;
+  }
+
+  if(form===2 || form===4){
+    steps += `<div class="step">⇒ ${b} - ${a}x - ${b} = ${c} - ${b} <span class="note">(Subtract ${b} on both sides)</span></div>`;
+    steps += `<div class="step">⇒ -${a}x = ${c-b}</div>`;
+    steps += `<div class="step">⇒ ${a}x = ${b-c} <span class="note">(Multiply both sides by −1)</span></div>`;
+    steps += `<div class="step">⇒ ${a}x / ${a} = ${b-c} / ${a} <span class="note">(Divide by ${a} on both sides)</span></div>`;
+    steps += `<div class="step">⇒ x = ${x}</div>`;
+  }
+
+  content.innerHTML += `
+    ${steps}
+    <div class="final">∴ x = ${x}</div>
+  `;
+  prompt.innerHTML = `Press <b>y</b> for next or <b>n</b> to exit.`;
+  stage="a";
+}
+
+/* ---------- CONTROLS ---------- */
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y") showQ();
+  else if(k==="n") document.getElementById("card").innerHTML="<h2 style='text-align:center'>Session Ended</h2>";
+});
+
+document.body.addEventListener("click",()=>{
+  if(stage==="q") showA();
+});
+
+showQ();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver: Trial & Error (Integers)</title>
+<style>
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    user-select: none;
+  }
+  .card {
+    width: 100%;
+    max-width: 800px;
+    padding: 35px;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    border: 1px solid #e1e4e8;
+  }
+  .q-header {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .q-text {
+    font-size: 32px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-left: 10px solid #007bff;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .table-container {
+    margin-top: 25px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #dee2e6;
+    animation: fadeIn 0.5s ease;
+  }
+  .step-row {
+    display: flex;
+    border-bottom: 1px solid #dee2e6;
+    align-items: center;
+    background: #fff;
+  }
+  .col-lhs, .col-rhs {
+    flex: 1;
+    padding: 18px;
+    font-size: 20px;
+    font-family: "Consolas", "Courier New", monospace;
+  }
+  .col-lhs {
+    border-right: 2px solid #dee2e6;
+    color: #d63384;
+    text-align: right;
+    font-weight: 600;
+  }
+  .col-rhs {
+    color: #0d6efd;
+    text-align: left;
+    font-weight: 600;
+  }
+  .header-row {
+    background: #212529 !important;
+  }
+  .header-row .col-lhs, .header-row .col-rhs {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    text-align: center;
+    font-family: "Segoe UI", sans-serif;
+  }
+  .explanation {
+    padding: 12px 20px;
+    background: #fff9c4;
+    color: #5d4037;
+    font-size: 15px;
+    font-weight: 500;
+    font-style: italic;
+    border-bottom: 1px solid #dee2e6;
+    text-align: center;
+  }
+  .final-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: #e8f5e9;
+    border: 2px solid #a5d6a7;
+    color: #2e7d32;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 20px;
+    text-align: center;
+    animation: slideUp 0.4s ease;
+  }
+  .prompt {
+    margin-top: 35px;
+    font-size: 15px;
+    color: #495057;
+    text-align: center;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    background: #fdfdfd;
+    border-radius: 0 0 20px 20px;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Tap here or press any key to reveal solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const phrases = ["Solve by trial-and-error method:", "Find the root of the equation:", "Solve the linear equation:"];
+let stage = "q", type, A, B, X, eqStr;
+
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randNonZero(min, max) { let n; do { n = rand(min, max); } while (n === 0); return n; }
+
+function clean(str) {
+  return str.toString()
+    .replace(/\+\s*-/g, '- ')
+    .replace(/-\s*-/g, '+ ')
+    .replace(/\(\s*-/g, '(-')
+    .replace(/=\s*-/g, '= -')
+    .replace(/−\s*-/g, '+ ');
+}
+
+function fmt(n) { return n < 0 ? `(${n})` : n; }
+
+function generate() {
+  type = rand(1, 7);
+  switch(type) {
+    case 1: A = randNonZero(-20, 20); X = rand(-15, 15); B = X + A; eqStr = clean(`x + ${fmt(A)} = ${B}`); break;
+    case 2: A = randNonZero(-20, 20); B = rand(-15, 15); X = B + A; eqStr = clean(`x − ${fmt(A)} = ${B}`); break;
+    case 3: A = randNonZero(-12, 12); X = rand(-10, 10); B = A * X; eqStr = `${A}x = ${B}`; break;
+    case 4: A = randNonZero(-10, 10); B = rand(-10, 10); X = A * B; eqStr = clean(`x / ${fmt(A)} = ${B}`); break;
+    case 5: B = randNonZero(-8, 8); X = randNonZero(-8, 8); A = B * X; eqStr = ` ${A} / x = ${B}`; break;
+    case 6: X = rand(-20, 20); B = rand(-20, 20); A = B + X; eqStr = clean(`${A} − x = ${B}`); break;
+    case 7: A = randNonZero(-20, 20); X = rand(-15, 15); B = A + X; eqStr = clean(`${A} + x = ${B}`); break;
+  }
+}
+
+function showSolution() {
+  if (stage !== "q") return;
+  let html = `<div class="table-container">
+    <div class="step-row header-row">
+      <div class="col-lhs">LHS</div>
+      <div class="col-rhs">RHS</div>
+    </div>`;
+  
+  const row = (l, r) => html += `<div class="step-row"><div class="col-lhs">⇒ ${clean(l)}</div><div class="col-rhs">${clean(r)}</div></div>`;
+  const note = t => html += `<div class="explanation">★ ${t}</div>`;
+  let result = "";
+
+  if(type === 1 || type === 7) {
+    let base = type === 1 ? `x + ${fmt(A)}` : `${A} + x`;
+    row(base, B);
+    note(`To isolate x, subtract ${fmt(A)} from both sides`);
+    row(`${base} − ${fmt(A)}`, `${B} − ${fmt(A)}`);
+    row(`x`, X);
+    result = X;
+  } else if(type === 2) {
+    row(`x − ${fmt(A)}`, B);
+    note(`To isolate x, add ${fmt(A)} to both sides`);
+    row(`x − ${fmt(A)} + ${fmt(A)}`, `${B} + ${fmt(A)}`);
+    row(`x`, X);
+    result = X;
+  } else if(type === 3) {
+    row(`${A}x`, B);
+    note(`Divide both sides by ${A}`);
+    row(`(${A}x) / ${A}`, `${B} / ${A}`);
+    row(`x`, X);
+    result = X;
+  } else if(type === 4) {
+    row(`x / ${fmt(A)}`, B);
+    note(`Multiply both sides by ${fmt(A)}`);
+    row(`(x / ${fmt(A)}) × ${fmt(A)}`, `${B} × ${fmt(A)}`);
+    row(`x`, X);
+    result = X;
+  } else if(type === 5) {
+    row(`${A} / x`, B);
+    note(`Multiply both sides by x, then divide by ${B}`);
+    row(`${A}`, `${B}x`);
+    row(`${A} / ${B}`, `x`);
+    row(X, `x`);
+    result = X;
+  } else if(type === 6) {
+    row(`${A} − x`, B);
+    note(`Subtract ${A} from both sides`);
+    row(`${A} − x − ${A}`, `${B} − ${A}`);
+    row(`−x`, B - A);
+    note(`Multiply both sides by -1`);
+    row(`−x × (-1)`, `(${B - A}) × (-1)`);
+    row(`x`, X);
+    result = X;
+  }
+
+  html += `</div><div class="final-box">Solution: x = ${result}</div>`;
+  content.innerHTML += html;
+  prompt.innerHTML = "Press <b>'Y'</b> for Next or <b>'N'</b> to Exit.";
+  stage = "a";
+}
+
+function next() {
+  generate();
+  content.innerHTML = `<div class="q-header">${phrases[rand(0, phrases.length-1)]}</div><div class="q-text">${eqStr}</div>`;
+  prompt.innerHTML = "Tap here or press any key to reveal solution.";
+  stage = "q";
+}
+
+// Global Listeners
+window.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if(stage === "q") showSolution();
+  else if(k === 'y') next();
+  else if(k === 'n') document.getElementById("card").innerHTML = "<h2 style='text-align:center; padding:50px;'>Practice Ended.</h2>";
+});
+
+document.body.addEventListener("click", () => {
+  if(stage === "q") showSolution();
+});
+
+next();
+})();
+</script>
+</body>
+</html>

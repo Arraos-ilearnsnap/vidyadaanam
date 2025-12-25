@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver: Trial & Error (Integers)</title>
+<style>
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+.card {
+  width: 100%;
+  max-width: 850px;
+  padding: 32px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  border: 1px solid #e1e4e8;
+}
+.q-header {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+.q-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-left: 6px solid #007bff;
+  border-radius: 4px;
+}
+.table-container {
+  margin-top: 24px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.step-row {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+}
+.col-lhs, .col-rhs {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 18px;
+  font-family: Consolas, monospace;
+}
+.col-lhs {
+  border-right: 1px solid #dee2e6;
+  color: #d63384;
+}
+.col-rhs {
+  color: #0d6efd;
+}
+.header-row .col-lhs, .header-row .col-rhs {
+  background: #e9ecef;
+  font-weight: 700;
+  color: #495057;
+}
+.explanation {
+  padding: 8px 16px;
+  background: #fffbea;
+  color: #856404;
+  font-size: 14px;
+  font-style: italic;
+}
+.final-box {
+  margin-top: 24px;
+  padding: 16px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.prompt {
+  margin-top: 30px;
+  font-size: 13px;
+  font-style: italic;
+  color: #adb5bd;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Utilities ---------- */
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function randNonZero(min, max) {
+  let n;
+  do { n = randInt(min, max); } while (n === 0);
+  return n;
+}
+function gcd(a, b) {
+  return b ? gcd(b, a % b) : Math.abs(a);
+}
+
+/* ---------- Phrases ---------- */
+const phrases = [
+  "Solve each of the following equations by trial-and-error method",
+  "Solve by trial and error method",
+  "Solve this linear equation by trial and error method",
+  "Solve by hit and trial",
+  "Solve by trial and error"
+];
+
+let stage = "q";
+let type, A, B, X, eqStr;
+const content = document.getElementById("content");
+const prompt = document.getElementById("prompt");
+
+/* ---------- Generator (INTEGERS) ---------- */
+function generate() {
+
+  type = randInt(1, 7);
+
+  switch(type) {
+
+    case 1: // x + A = B
+      A = randInt(-20, 20);
+      X = randInt(-20, 20);
+      B = X + A;
+      eqStr = `x + ${A} = ${B}`;
+      break;
+
+    case 2: // x - A = B
+      A = randInt(-20, 20);
+      B = randInt(-20, 20);
+      X = B + A;
+      eqStr = `x − ${A} = ${B}`;
+      break;
+
+    case 3: // Ax = B
+      A = randNonZero(-12, 12);
+      X = randInt(-10, 10);
+      B = A * X;
+      eqStr = `${A}x = ${B}`;
+      break;
+
+    case 4: // x / A = B
+      A = randNonZero(-10, 10);
+      B = randInt(-10, 10);
+      X = A * B;
+      eqStr = `x / ${A} = ${B}`;
+      break;
+
+    case 5: // A / x = B
+      B = randNonZero(-10, 10);
+      X = randNonZero(-10, 10);
+      A = B * X;
+      eqStr = `${A} / x = ${B}`;
+      break;
+
+    case 6: // A - x = B
+      X = randInt(-20, 20);
+      B = randInt(-20, 20);
+      A = B + X;
+      eqStr = `${A} − x = ${B}`;
+      break;
+
+    case 7: // A + x = B
+      X = randInt(-20, 20);
+      A = randInt(-20, 20);
+      B = A + X;
+      eqStr = `${A} + x = ${B}`;
+      break;
+  }
+}
+
+/* ---------- Render Question ---------- */
+function showQuestion() {
+  const phrase = phrases[randInt(0, phrases.length - 1)];
+  content.innerHTML = `
+    <div class="q-header">${phrase}</div>
+    <div class="q-header" style="margin-top:12px;">Equation:</div>
+    <div class="q-text">${eqStr}</div>
+  `;
+  stage = "q";
+}
+
+/* ---------- Render Solution ---------- */
+function showSolution() {
+  let html = `<div class="table-container">
+    <div class="step-row header-row">
+      <div class="col-lhs">LHS</div>
+      <div class="col-rhs">RHS</div>
+    </div>`;
+
+  const row = (l,r)=> html+=`<div class="step-row"><div class="col-lhs">⇒ ${l}</div><div class="col-rhs">${r}</div></div>`;
+  const note = t=> html+=`<div class="explanation">(${t})</div>`;
+
+  let conclusion="";
+
+  if(type===1){
+    row(`x + ${A}`, B);
+    row(`x + ${A} − ${A}`, `${B} − ${A}`);
+    note(`Subtract ${A} on both sides`);
+    row(`x`, X);
+    conclusion=`Value of x is ${X}.`;
+  }
+  else if(type===2){
+    row(`x − ${A}`, B);
+    row(`x − ${A} + ${A}`, `${B} + ${A}`);
+    note(`Add ${A} on both sides`);
+    row(`x`, X);
+    conclusion=`Value of x is ${X}.`;
+  }
+  else if(type===3){
+    row(`${A}x`, B);
+    row(`${A}x / ${A}`, `${B} / ${A}`);
+    note(`Divide both sides by ${A}`);
+    row(`x`, X);
+    conclusion=`x = ${X}.`;
+  }
+  else if(type===4){
+    row(`x / ${A}`, B);
+    row(`(x / ${A}) × ${A}`, `${B} × ${A}`);
+    note(`Multiply both sides by ${A}`);
+    row(`x`, X);
+    conclusion=`x = ${X}.`;
+  }
+  else if(type===5){
+    row(`(${A} / x) × (1 / ${A})`, `${B} × (1 / ${A})`);
+    note(`Multiply both sides by 1/${A}`);
+    row(`1 / x`, `1 / ${X}`);
+    note(`Take reciprocal on both sides`);
+    row(`x`, X);
+    conclusion=`x = ${X}.`;
+  }
+  else if(type===6){
+    row(`${A} − x`, B);
+    row(`${A} − x − ${A}`, `${B} − ${A}`);
+    note(`Subtract ${A} on both sides`);
+    row(`−x`, B-A);
+    row(`x`, X);
+    conclusion=`x = ${X}.`;
+  }
+  else if(type===7){
+    row(`${A} + x`, B);
+    row(`${A} + x − ${A}`, `${B} − ${A}`);
+    note(`Subtract ${A} on both sides`);
+    row(`x`, X);
+    conclusion=`x = ${X}.`;
+  }
+
+  html+=`</div><div class="final-box">${conclusion}</div>`;
+  content.innerHTML+=html;
+  prompt.textContent="Press y for next question or n to exit.";
+  stage="a";
+}
+
+/* ---------- Controller ---------- */
+generate();
+showQuestion();
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showSolution();
+  else if(k==="y"){ generate(); showQuestion(); prompt.textContent="Press any key to reveal the solution."; }
+  else if(k==="n"){ document.getElementById("card").innerHTML="<h2 style='text-align:center'>Session Ended</h2>"; }
+});
+
+})();
+</script>
+</body>
+</html>

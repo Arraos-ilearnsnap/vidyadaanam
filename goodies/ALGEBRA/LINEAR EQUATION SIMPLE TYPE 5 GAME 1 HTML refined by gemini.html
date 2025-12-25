@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver – Fraction Form (ax/b = c)</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f0f2f5;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  user-select:none;
+}
+.card{
+  max-width:850px;
+  width:100%;
+  background:#ffffff;
+  padding:32px;
+  border-radius:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.12);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6c757d;
+  margin-bottom:10px;
+}
+.q-text{
+  font-size:32px;
+  font-weight:800;
+  text-align:center;
+  padding:24px;
+  background:#f8f9fa;
+  border-left:8px solid #007bff;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+.step{
+  font-size:20px;
+  margin:18px 0;
+  font-family:Consolas, monospace;
+  line-height:1.6;
+}
+.note{
+  font-size:15px;
+  color:#2e7d32;
+  font-weight:bold;
+  background:#e8f5e9;
+  padding:4px 8px;
+  border-radius:4px;
+  margin-left:10px;
+}
+.final{
+  margin-top:25px;
+  padding:18px;
+  background:#e3f2fd;
+  border:2px solid #90caf9;
+  border-radius:12px;
+  font-size:24px;
+  font-weight:800;
+  text-align:center;
+  color:#0d47a1;
+}
+.prompt{
+  margin-top:30px;
+  font-size:14px;
+  text-align:center;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key or click to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let stage="q";
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function gcd(a,b){ return b ? gcd(b,a%b) : Math.abs(a); }
+
+// Returns string representation of a simplified fraction
+function getSimplifiedFrac(n, d) {
+  if(d < 0) { n = -n; d = -d; }
+  const common = gcd(n, d);
+  const num = n / common;
+  const den = d / common;
+  return den === 1 ? `${num}` : `${num}/${den}`;
+}
+
+let a, b, c, form, eq;
+
+function generate(){
+  a = rand(1, 50); 
+  b = rand(1, 50); 
+  c = rand(1, 50); 
+  form = rand(1, 2); 
+
+  if(form === 1) eq = `${a}x / ${b} = ${c}`;
+  if(form === 2) eq = `${c} = ${a}x / ${b}`;
+}
+
+function showQ(){
+  generate();
+  content.innerHTML = `
+    <div class="q-header">Solve for x:</div>
+    <div class="q-text">${eq}</div>
+  `;
+  prompt.innerHTML = "Press any key or click to reveal the solution.";
+  stage = "q";
+}
+
+function showA(){
+  let steps = "";
+  const unsimplifiedNum = c * b;
+  const simplifiedResult = getSimplifiedFrac(unsimplifiedNum, a);
+  const needsSimplification = (gcd(unsimplifiedNum, a) !== 1 || a === 1);
+
+  steps += `<div class="step">1. Multiply both sides by ${b}:<br>&nbsp;&nbsp; ${a}x = ${c} × ${b}</div>`;
+  steps += `<div class="step">2. Simplify the product:<br>&nbsp;&nbsp; ${a}x = ${unsimplifiedNum}</div>`;
+  steps += `<div class="step">3. Divide both sides by ${a}:<br>&nbsp;&nbsp; <b>x = ${unsimplifiedNum} / ${a}</b> <span class="note">(Unsimplified)</span></div>`;
+
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:20px 0;">
+    ${steps}
+    <div class="final">
+        ${needsSimplification ? 'Simplify the fraction:<br>' : ''}
+        ∴ x = ${simplifiedResult}
+    </div>
+  `;
+  prompt.innerHTML = `Press <b>Y</b> for next or <b>N</b> to exit.`;
+  stage = "a";
+}
+
+window.addEventListener("keydown", e => {
+  const k = (e.key || "").toLowerCase();
+  if(stage === "q") showA();
+  else if(k === "y") showQ();
+  else if(k === "n") document.getElementById("card").innerHTML = "<h2 style='text-align:center'>Session Ended</h2>";
+});
+
+document.body.addEventListener("click", () => { if(stage === "q") showA(); });
+
+showQ();
+})();
+</script>
+</body>
+</html>
