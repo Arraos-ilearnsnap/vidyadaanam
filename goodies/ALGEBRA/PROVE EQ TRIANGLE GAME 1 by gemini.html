@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equilateral Triangle Proof Master</title>
+<style>
+:root{
+  --primary:#1a73e8; --success:#1e8e3e; --accent:#d93025;
+  --bg:#f8f9fa; --border:#dadce0;
+}
+body{ margin:0; padding:20px; font-family:"Segoe UI", sans-serif; background:var(--bg); display:flex; justify-content:center; }
+.card{ max-width:900px; width:100%; background:#fff; padding:40px; border-radius:24px; box-shadow:0 15px 50px rgba(0,0,0,0.1); }
+.q-text{ font-size:24px; font-weight:800; padding:25px; background:#e8f0fe; border-left:8px solid var(--primary); border-radius:12px; margin-bottom:30px; color:#202124; }
+.step-group{ margin-bottom:25px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.step-header{ background:#f1f3f4; padding:12px 20px; font-weight:800; color:var(--primary); text-transform:uppercase; font-size:13px; }
+.step{ padding:20px; font-family:"Cascadia Code", monospace; font-size:17px; line-height:1.7; }
+.formula{ color:var(--accent); font-weight:800; background:#fff5f5; padding:2px 6px; border-radius:4px; }
+.final{ margin-top:30px; padding:25px; background:var(--primary); color:#fff; border-radius:18px; text-align:center; font-size:28px; font-weight:900; }
+.btn-prompt{ text-align:center; margin-top:20px; font-size:14px; color:#666; }
+.hl{ color:var(--accent); font-weight:bold; }
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div id="display"></div>
+  <div class="btn-prompt" id="prompt">Press any key to generate a triangle proof.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const display = document.getElementById("display");
+const prompt = document.getElementById("prompt");
+let stage = "q";
+let pts = {};
+
+function generateEquilateral() {
+    // 1. Generate a random base AB with 2-digit integer coordinates
+    let x1 = Math.floor(Math.random() * 50);
+    let y1 = Math.floor(Math.random() * 50);
+    let side = Math.floor(Math.random() * 10) + 5; // length between 5 and 15
+    
+    const A = {x: x1, y: y1};
+    const B = {x: x1 + side, y: y1}; // Keeping base horizontal for better readability
+    
+    // 2. Calculate C using 60-degree height: h = side * sin(60) = side * √3 / 2
+    // Midpoint of AB + 60 deg height
+    const Cx = x1 + (side / 2);
+    const Cy = y1 + (side * Math.sqrt(3) / 2);
+    
+    const C = {x: parseFloat(Cx.toFixed(2)), y: parseFloat(Cy.toFixed(2))};
+    return {A, B, C};
+}
+
+function distSq(P, Q) { 
+    return Math.pow(Q.x - P.x, 2) + Math.pow(Q.y - P.y, 2); 
+}
+
+function showQuestion() {
+    pts = generateEquilateral();
+    display.innerHTML = `
+        <div style="font-weight:bold; color:#5f6368; margin-bottom:10px; text-transform:uppercase;">Challenge</div>
+        <div class="q-text">
+            Prove that the points:<br>
+            <b>A(${pts.A.x}, ${pts.A.y}), B(${pts.B.x}, ${pts.B.y}), C(${pts.C.x}, ${pts.C.y})</b><br>
+            form an equilateral triangle.
+        </div>
+        <div id="solution"></div>
+    `;
+    stage = "q";
+    prompt.innerHTML = "Press any key to see the full proof.";
+}
+
+function showSolution() {
+    const sol = document.getElementById("solution");
+    const dAB = distSq(pts.A, pts.B);
+    const dBC = distSq(pts.B, pts.C);
+    const dCA = distSq(pts.C, pts.A);
+
+    // Note: Due to floating point rounding on vertex C, 
+    // we round the distance squared to 2 decimal places for comparison.
+    const round = (val) => Math.round(val * 100) / 100;
+
+    sol.innerHTML = `
+    <div class="step-group">
+        <div class="step-header">Phase 1: The Distance Formula</div>
+        <div class="step">
+            The distance between $(x_1, y_1)$ and $(x_2, y_2)$ is:<br>
+            <span class="formula">d² = (x₂ - x₁)² + (y₂ - y₁)²</span>
+        </div>
+    </div>
+
+    <div class="step-group">
+        <div class="step-header">Phase 2: Calculating Squared Lengths</div>
+        <div class="step">
+            AB² = (${pts.B.x} - ${pts.A.x})² + (${pts.B.y} - ${pts.A.y})²<br>
+            &nbsp;&nbsp;&nbsp; = ${round(dAB)}<br><br>
+            
+            BC² = (${pts.C.x} - ${pts.B.x})² + (${pts.C.y} - ${pts.B.y})²<br>
+            &nbsp;&nbsp;&nbsp; = (${(pts.C.x - pts.B.x).toFixed(2)})² + (${(pts.C.y - pts.B.y).toFixed(2)})²<br>
+            &nbsp;&nbsp;&nbsp; = ${round(dBC)}<br><br>
+            
+            CA² = (${pts.A.x} - ${pts.C.x})² + (${pts.A.y} - ${pts.C.y})²<br>
+            &nbsp;&nbsp;&nbsp; = (${(pts.A.x - pts.C.x).toFixed(2)})² + (${(pts.A.y - pts.C.y).toFixed(2)})²<br>
+            &nbsp;&nbsp;&nbsp; = ${round(dCA)}
+        </div>
+    </div>
+
+    <div class="step-group">
+        <div class="step-header">Phase 3: Verification of Equality</div>
+        <div class="step">
+            Side AB = √${round(dAB)} ≈ <b>${Math.sqrt(dAB).toFixed(2)}</b><br>
+            Side BC = √${round(dBC)} ≈ <b>${Math.sqrt(dBC).toFixed(2)}</b><br>
+            Side CA = √${round(dCA)} ≈ <b>${Math.sqrt(dCA).toFixed(2)}</b><br><br>
+            <span style="color:var(--success)">✔ Since AB = BC = CA, the triangle is equilateral.</span>
+        </div>
+    </div>
+
+    <div class="final">∴ Proven Equilateral</div>
+    `;
+    stage = "a";
+    prompt.innerHTML = "Press <b>Y</b> for a new triangle or <b>N</b> to exit.";
+}
+
+window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (stage === "q") showSolution();
+    else if (k === "y") showQuestion();
+    else if (k === "n") {
+        display.innerHTML = "<h2 style='text-align:center;padding:50px;'>Geometric Logic Mastered.</h2>";
+    }
+});
+
+showQuestion();
+})();
+</script>
+</body>
+</html>

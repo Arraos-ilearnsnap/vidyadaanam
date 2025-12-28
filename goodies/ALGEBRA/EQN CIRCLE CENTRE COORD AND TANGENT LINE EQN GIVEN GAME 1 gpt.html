@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle Equation Master — Centre & Tangent</title>
+
+<style>
+:root{
+  --primary:#1a73e8;
+  --success:#1e8e3e;
+  --accent:#d93025;
+  --bg:#f8f9fa;
+  --border:#dadce0;
+}
+body{
+  margin:0;
+  padding:28px;
+  font-family:"Segoe UI", Arial, sans-serif;
+  background:var(--bg);
+  display:flex;
+  justify-content:center;
+}
+.card{
+  max-width:980px;
+  width:100%;
+  background:#ffffff;
+  padding:46px;
+  border-radius:26px;
+  box-shadow:0 18px 55px rgba(0,0,0,0.12);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:#5f6368;
+  margin-bottom:10px;
+}
+.q-text{
+  font-size:26px;
+  font-weight:800;
+  padding:28px;
+  background:#e8f0fe;
+  border-left:10px solid var(--primary);
+  border-radius:16px;
+  margin-bottom:36px;
+  color:#202124;
+}
+.step-group{
+  margin-top:30px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+}
+.step-header{
+  background:#f1f3f4;
+  padding:14px 24px;
+  font-weight:800;
+  color:var(--primary);
+  text-transform:uppercase;
+  font-size:14px;
+}
+.step{
+  padding:22px;
+  font-family:"Cascadia Code","Consolas",monospace;
+  font-size:18px;
+  line-height:1.9;
+}
+.formula{
+  color:var(--accent);
+  font-weight:800;
+  background:#fff5f5;
+  padding:2px 8px;
+  border-radius:4px;
+}
+.note{
+  display:inline-block;
+  margin-left:8px;
+  padding:3px 8px;
+  background:#e6f4ea;
+  color:var(--success);
+  border-radius:6px;
+  font-size:14px;
+  font-weight:700;
+}
+.final{
+  margin-top:42px;
+  padding:30px;
+  background:var(--primary);
+  color:#ffffff;
+  border-radius:22px;
+  text-align:center;
+  font-size:30px;
+  font-weight:900;
+}
+.prompt{
+  margin-top:32px;
+  text-align:center;
+  font-size:14px;
+  color:#777;
+}
+.hl{
+  color:#d93025;
+  font-weight:900;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content=document.getElementById("content");
+const prompt=document.getElementById("prompt");
+let stage="q";
+
+function randNZ(){
+  let n=0;
+  while(n===0){
+    n=Math.floor(Math.random()*19)-9; // -9 to 9 excluding 0
+  }
+  return n;
+}
+
+/* --------- Random data --------- */
+let h,k,a,b,c;
+
+function generate(){
+  h = randNZ();
+  k = randNZ();
+  a = randNZ();
+  b = randNZ();
+  c = randNZ();
+}
+
+/* --------- Question --------- */
+function showQ(){
+  generate();
+  content.innerHTML=`
+    <div class="q-header">Question</div>
+    <div class="q-text">
+      Find the equation of the circle whose centre is<br><br>
+      <b>(${h}, ${k})</b><br><br>
+      and which is tangent to the line<br><br>
+      <b>${a}x ${b>0?'+':'−'} ${Math.abs(b)}y ${c>0?'+':'−'} ${Math.abs(c)} = 0</b>
+    </div>
+  `;
+  stage="q";
+}
+
+/* --------- Solution --------- */
+function showA(){
+  const num = Math.abs(a*h + b*k + c);
+  const den = Math.sqrt(a*a + b*b);
+  const r = num/den;
+  const r2 = r*r;
+
+  content.innerHTML += `
+
+  <div class="step-group">
+    <div class="step-header">Step 1: Radius of the Circle</div>
+    <div class="step">
+      Since the circle is tangent to the line, its radius is the
+      perpendicular distance from the centre to the line.
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 2: Distance of a Point from a Line</div>
+    <div class="step">
+      Distance of point (x₁,y₁) from ax + by + c = 0 is:<br>
+      <span class="formula">|ax₁ + by₁ + c| / √(a² + b²)</span>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 3: Substitution</div>
+    <div class="step">
+      Here (x₁,y₁) = (${h}, ${k}) and line is ${a}x ${b>0?'+':'−'} ${Math.abs(b)}y ${c>0?'+':'−'} ${Math.abs(c)} = 0<br><br>
+
+      Radius r = |${a}(${h}) + ${b}(${k}) + ${c}| / √(${a}² + ${b}²)<br>
+      r = |${a*h + b*k + c}| / √(${a*a + b*b})<br>
+      r = <b>${num} / √${a*a + b*b}</b>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 4: Equation of the Circle</div>
+    <div class="step">
+      Standard equation of a circle with centre (h,k):<br>
+      <span class="formula">(x − h)² + (y − k)² = r²</span>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 5: Final Substitution</div>
+    <div class="step">
+      (x − ${h})² + (y − ${k})² = (${num}/√${a*a + b*b})²<br><br>
+      (x − ${h})² + (y − ${k})² = <b>${r2.toFixed(3)}</b>
+    </div>
+  </div>
+
+  <div class="final">
+    ∴ Required equation is<br>
+    (x − ${h})² + (y − ${k})² = ${r2.toFixed(3)}
+  </div>
+  `;
+
+  prompt.innerHTML=`Press <b>Y</b> for next or <b>N</b> to exit.`;
+  stage="a";
+}
+
+/* --------- Controls --------- */
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y") showQ();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML=
+      "<h2 style='text-align:center;padding:60px;'>Excellent. You have mastered circle equations.</h2>";
+  }
+});
+document.body.addEventListener("click",()=>{ if(stage==="q") showA(); });
+
+showQ();
+})();
+</script>
+</body>
+</html>

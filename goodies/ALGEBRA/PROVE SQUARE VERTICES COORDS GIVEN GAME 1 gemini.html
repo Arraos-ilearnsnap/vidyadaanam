@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Square Proof Master: Any Orientation</title>
+<style>
+:root{
+  --primary:#1a73e8; --success:#1e8e3e; --accent:#d93025;
+  --bg:#f8f9fa; --border:#dadce0;
+}
+body{ margin:0; padding:20px; font-family:"Segoe UI", sans-serif; background:var(--bg); display:flex; justify-content:center; }
+.card{ max-width:900px; width:100%; background:#fff; padding:40px; border-radius:24px; box-shadow:0 15px 50px rgba(0,0,0,0.1); }
+.q-text{ font-size:24px; font-weight:800; padding:25px; background:#e8f0fe; border-left:8px solid var(--primary); border-radius:12px; margin-bottom:30px; color:#202124; }
+.step-group{ margin-bottom:25px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.step-header{ background:#f1f3f4; padding:12px 20px; font-weight:800; color:var(--primary); text-transform:uppercase; font-size:13px; }
+.step{ padding:20px; font-family:"Cascadia Code", monospace; font-size:17px; line-height:1.7; }
+.formula{ color:var(--accent); font-weight:800; background:#fff5f5; padding:2px 6px; border-radius:4px; }
+.final{ margin-top:30px; padding:25px; background:var(--primary); color:#fff; border-radius:18px; text-align:center; font-size:28px; font-weight:900; }
+.btn-prompt{ text-align:center; margin-top:20px; font-size:14px; color:#666; }
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div id="display"></div>
+  <div class="btn-prompt" id="prompt">Press any key to generate a square proof.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const display = document.getElementById("display");
+const prompt = document.getElementById("prompt");
+let stage = "q";
+let pts = {};
+
+function generateSquare() {
+    // 1. Pick a random base side AB that isn't horizontal or vertical
+    let x1 = Math.floor(Math.random()*5);
+    let y1 = Math.floor(Math.random()*5);
+    let dx, dy;
+    
+    do {
+        dx = Math.floor(Math.random()*4) + 2; 
+        dy = Math.floor(Math.random()*4) + 2;
+    } while (dx === dy); // Ensures it's not a specific 45-degree angle every time
+
+    const A = {x: x1, y: y1};
+    const B = {x: x1 + dx, y: y1 + dy};
+    
+    // 2. Rotate vector AB (dx, dy) by 90 degrees to find vector BC
+    // Rotation formula: (-dy, dx)
+    const C = {x: B.x - dy, y: B.y + dx};
+    const D = {x: A.x - dy, y: A.y + dx};
+    
+    return {A, B, C, D};
+}
+
+function distSq(P, Q) { return (Q.x - P.x)**2 + (Q.y - P.y)**2; }
+function slope(P, Q) { return (Q.y - P.y) / (Q.x - P.x); }
+
+function showQuestion() {
+    pts = generateSquare();
+    display.innerHTML = `
+        <div style="font-weight:bold; color:#5f6368; margin-bottom:10px; text-transform:uppercase;">Challenge</div>
+        <div class="q-text">
+            Prove that the points:<br>
+            <b>A(${pts.A.x},${pts.A.y}), B(${pts.B.x},${pts.B.y}), C(${pts.C.x},${pts.C.y}), D(${pts.D.x},${pts.D.y})</b><br>
+            form a perfect square.
+        </div>
+        <div id="solution"></div>
+    `;
+    stage = "q";
+    prompt.innerHTML = "Press any key to see the proof.";
+}
+
+function showSolution() {
+    const sol = document.getElementById("solution");
+    const dAB = distSq(pts.A, pts.B);
+    const mAB = slope(pts.A, pts.B);
+    const mBC = slope(pts.B, pts.C);
+    const dAC = distSq(pts.A, pts.C);
+    const dBD = distSq(pts.B, pts.D);
+
+    sol.innerHTML = `
+    <div class="step-group">
+        <div class="step-header">Phase 1: Side Lengths (Distance²)</div>
+        <div class="step">
+            AB² = (${pts.B.x}-${pts.A.x})² + (${pts.B.y}-${pts.A.y})² = <b>${dAB}</b><br>
+            BC² = (${pts.C.x}-${pts.B.x})² + (${pts.C.y}-${pts.B.y})² = <b>${dAB}</b><br>
+            CD² = (${pts.D.x}-${pts.C.x})² + (${pts.D.y}-${pts.C.y})² = <b>${dAB}</b><br>
+            DA² = (${pts.A.x}-${pts.D.x})² + (${pts.A.y}-${pts.D.y})² = <b>${dAB}</b><br>
+            <span style="color:var(--success)">✔ All sides are equal (Length = √${dAB})</span>
+        </div>
+    </div>
+
+    <div class="step-group">
+        <div class="step-header">Phase 2: Perpendicularity (Slopes)</div>
+        <div class="step">
+            m(AB) = (${pts.B.y}-${pts.A.y}) / (${pts.B.x}-${pts.A.x}) = <b>${mAB.toFixed(2)}</b><br>
+            m(BC) = (${pts.C.y}-${pts.B.y}) / (${pts.C.x}-${pts.B.x}) = <b>${mBC.toFixed(2)}</b><br><br>
+            Check: m₁ × m₂ = ${mAB.toFixed(2)} × ${mBC.toFixed(2)} = <b>${(mAB * mBC).toFixed(0)}</b><br>
+            <span style="color:var(--success)">✔ Slopes product is -1 ∴ AB ⟂ BC</span>
+        </div>
+    </div>
+
+    <div class="step-group">
+        <div class="step-header">Phase 3: Diagonal Equality (Final Check)</div>
+        <div class="step">
+            Diagonal AC² = <b>${dAC}</b><br>
+            Diagonal BD² = <b>${dBD}</b><br>
+            <span style="color:var(--success)">✔ Diagonals are equal (AC = BD)</span>
+        </div>
+    </div>
+
+    <div class="final">∴ ABCD is a Square</div>
+    `;
+    stage = "a";
+    prompt.innerHTML = "Press <b>Y</b> for a new square or <b>N</b> to exit.";
+}
+
+window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (stage === "q") showSolution();
+    else if (k === "y") showQuestion();
+    else if (k === "n") {
+        document.getElementById("card").innerHTML = "<h2 style='text-align:center;padding:50px;'>Geometry is the language of the universe. Well done!</h2>";
+    }
+});
+
+showQuestion();
+})();
+</script>
+</body>
+</html>

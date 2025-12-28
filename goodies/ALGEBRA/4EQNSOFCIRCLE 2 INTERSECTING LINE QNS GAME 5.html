@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circle Equation Master — Touching Two Lines (All 4 Cases)</title>
+
+<style>
+:root{
+  --primary:#1a73e8;
+  --success:#1e8e3e;
+  --accent:#d93025;
+  --bg:#f8f9fa;
+  --border:#dadce0;
+}
+body{
+  margin:0;
+  padding:28px;
+  font-family:"Segoe UI", Arial, sans-serif;
+  background:var(--bg);
+  display:flex;
+  justify-content:center;
+}
+.card{
+  max-width:1100px;
+  width:100%;
+  background:#ffffff;
+  padding:48px;
+  border-radius:28px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.13);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:#5f6368;
+  margin-bottom:12px;
+}
+.q-text{
+  font-size:26px;
+  font-weight:800;
+  padding:30px;
+  background:#e8f0fe;
+  border-left:10px solid var(--primary);
+  border-radius:18px;
+  margin-bottom:38px;
+  color:#202124;
+}
+.step{
+  padding:24px;
+  font-family:"Cascadia Code","Consolas",monospace;
+  font-size:18px;
+  line-height:1.9;
+}
+.formula{
+  color:#d93025;
+  font-weight:800;
+  background:#fff5f5;
+  padding:2px 8px;
+  border-radius:4px;
+}
+.case{
+  background:#f8f9fa;
+  border:1px dashed #bbb;
+  padding:22px;
+  margin-top:20px;
+  border-radius:12px;
+}
+.prompt{
+  margin-top:34px;
+  text-align:center;
+  font-size:14px;
+  color:#777;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal the solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content=document.getElementById("content");
+const prompt=document.getElementById("prompt");
+let stage="q";
+
+function randNZ(){
+  let n=0;
+  while(n===0){
+    n=Math.floor(Math.random()*19)-9;
+  }
+  return n;
+}
+
+let a1,b1,c1,a2,b2,c2,r;
+
+function generate(){
+  r = Math.floor(Math.random()*6)+2;
+  do{
+    a1 = randNZ(); b1 = randNZ();
+    a2 = randNZ(); b2 = randNZ();
+  }while(a1*b2 === a2*b1);
+
+  c1 = randNZ();
+  c2 = randNZ();
+}
+
+function showQ(){
+  generate();
+  content.innerHTML=`
+    <div class="q-text">
+      Find all possible equations of circles of radius <b>${r}</b> units<br><br>
+      which touch both the lines:<br><br>
+      <b>${a1}x ${b1>0?'+':'−'} ${Math.abs(b1)}y ${c1>0?'+':'−'} ${Math.abs(c1)} = 0</b><br>
+      <b>${a2}x ${b2>0?'+':'−'} ${Math.abs(b2)}y ${c2>0?'+':'−'} ${Math.abs(c2)} = 0</b>
+    </div>
+  `;
+  stage="q";
+}
+
+function showA(){
+  content.innerHTML += `
+  ${makeCase(1,+1,+1)}
+  ${makeCase(2,+1,-1)}
+  ${makeCase(3,-1,+1)}
+  ${makeCase(4,-1,-1)}
+  `;
+  prompt.innerHTML=`Press <b>Y</b> for next or <b>N</b> to exit.`;
+  stage="a";
+}
+
+function makeCase(n,s1,s2){
+  const d1=Math.sqrt(a1*a1+b1*b1);
+  const d2=Math.sqrt(a2*a2+b2*b2);
+  const R1=s1*r*d1;
+  const R2=s2*r*d2;
+
+  const A=a1,B=b1,C=R1-c1;
+  const D=a2,E=b2,F=R2-c2;
+
+  const h=(C*E-B*F)/(A*E-B*D);
+  const k=(A*F-C*D)/(A*E-B*D);
+
+  return `
+  <div class="case">
+    <b>Case ${n}</b><br><br>
+
+    <b>Let the centre of the required circle be (h, k).</b><br><br>
+
+    <b>Since the circle touches the first line:</b><br>
+    <span class="formula">|${a1}h + ${b1}k + ${c1}| / √(${a1*a1+b1*b1}) = ${r}</span><br><br>
+
+    <b>Since the circle also touches the second line:</b><br>
+    <span class="formula">|${a2}h + ${b2}k + ${c2}| / √(${a2*a2+b2*b2}) = ${r}</span><br><br>
+
+    <b>Removing the modulus:</b><br>
+    ${a1}h + ${b1}k = ${C.toFixed(2)} ...(1)<br>
+    ${a2}h + ${b2}k = ${F.toFixed(2)} ...(2)<br><br>
+
+    <b>Substitution Method:</b><br>
+    From (1): h = (${C.toFixed(2)} − ${b1}k)/${a1}<br><br>
+
+    Substitute in (2):<br>
+    ${a2}[(${C.toFixed(2)} − ${b1}k)/${a1}] + ${b2}k = ${F.toFixed(2)}<br><br>
+
+    k = <b>${k.toFixed(3)}</b>,  
+    h = <b>${h.toFixed(3)}</b><br><br>
+
+    <b>Equation of the circle:</b><br>
+    <span class="formula">(x − ${h.toFixed(3)})² + (y − ${k.toFixed(3)})² = ${r*r}</span>
+  </div>
+  `;
+}
+
+window.addEventListener("keydown",e=>{
+  const k=(e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y") showQ();
+});
+document.body.addEventListener("click",()=>{ if(stage==="q") showA(); });
+
+showQ();
+})();
+</script>
+</body>
+</html>
