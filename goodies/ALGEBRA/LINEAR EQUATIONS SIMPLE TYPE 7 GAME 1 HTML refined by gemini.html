@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step-by-Step Equation Master (Types 5 & 6)</title>
+
+<style>
+:root {
+    --primary: #007bff;
+    --success: #2e7d32;
+    --note-bg: #e8f5e9;
+    --step-border: #dee2e6;
+}
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f0f2f5;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  user-select:none;
+}
+.card{
+  max-width:950px;
+  width:100%;
+  background:#ffffff;
+  padding:40px;
+  border-radius:24px;
+  box-shadow:0 15px 45px rgba(0,0,0,0.1);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6c757d;
+  letter-spacing: 1px;
+}
+.q-text{
+  font-size:38px;
+  font-weight:800;
+  text-align:center;
+  padding:30px;
+  background:#f8f9fa;
+  border-bottom:5px solid var(--primary);
+  border-radius:12px;
+  margin: 15px 0 30px 0;
+}
+.step-group-header {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 25px;
+  border-bottom: 1px solid var(--step-border);
+  padding-bottom: 5px;
+}
+.step{
+  font-size:20px;
+  margin:12px 0;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  line-height:1.8;
+  padding-left: 15px;
+}
+.note{
+  color: var(--success);
+  font-weight:700;
+  font-size: 15px;
+  background: var(--note-bg);
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left:10px;
+  font-family: sans-serif;
+}
+.op-highlight {
+  color: #d32f2f;
+  font-weight: 800;
+}
+.final{
+  margin-top:40px;
+  padding:24px;
+  background:#e3f2fd;
+  border:3px solid #90caf9;
+  border-radius:16px;
+  font-size:30px;
+  font-weight:900;
+  text-align:center;
+  color:#0d47a1;
+}
+.prompt{
+  margin-top:30px;
+  font-size:14px;
+  text-align:center;
+  color:#777;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">Press any key to reveal the step-by-step solution.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let stage = "q";
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+let a,b,c,d,x,type,eq;
+
+function generate(){
+  x = rand(1, 12); 
+  a = rand(2, 10);
+  c = rand(2, 10);
+  b = rand(1, 15);
+  type = rand(5, 6);
+
+  // Math: ax +/- b = d - cx 
+  // ax + cx = d -/+ b
+  // d = (a+c)x +/- b
+  if(type === 5) d = (a + c) * x + b; // for ax - b
+  else d = (a + c) * x - b;           // for ax + b
+
+  eq = (type === 5) 
+    ? `${a}x - ${b} = ${d} - ${c}x` 
+    : `${a}x + ${b} = ${d} - ${c}x`;
+}
+
+function showQ(){
+  generate();
+  content.innerHTML = `
+    <div class="q-header">Current Problem:</div>
+    <div class="q-text">${eq}</div>
+    <div id="solution-area"></div>
+  `;
+  prompt.innerHTML = "Press any key to reveal the solution.";
+  stage = "q";
+}
+
+function showA(){
+  const solArea = document.getElementById("solution-area");
+  let h = "";
+  const sumCoeff = a + c;
+  const op = type === 5 ? '-' : '+';
+  const invOp = type === 5 ? '+' : '-';
+  const rhsFinal = type === 5 ? d + b : d - b;
+
+  // Group 1: Variables
+  h += `<div class="step-group-header">PHASE 1: Collect Variable Terms (x) on the Left</div>`;
+  h += `<div class="step">1. Add <span class="op-highlight">${c}x</span> to both sides to remove it from the right:<br>
+        &nbsp;&nbsp; ${a}x ${op} ${b} <span class="op-highlight">+ ${c}x</span> = ${d} - ${c}x <span class="op-highlight">+ ${c}x</span></div>`;
+  
+  h += `<div class="step">2. Rearrange and combine the x terms:<br>
+        &nbsp;&nbsp; (${a}x + ${c}x) ${op} ${b} = ${d} <span class="note">(Simplified: ${c}x - ${c}x = 0)</span></div>`;
+  
+  h += `<div class="step">3. Calculate total x:<br>
+        &nbsp;&nbsp; <b>${sumCoeff}x</b> ${op} ${b} = ${d}</div>`;
+
+  // Group 2: Constants
+  h += `<div class="step-group-header">PHASE 2: Move Constant Terms to the Right</div>`;
+  h += `<div class="step">4. ${type===5?'Add':'Subtract'} <span class="op-highlight">${b}</span> ${type===5?'to':'from'} both sides to isolate the x-term:<br>
+        &nbsp;&nbsp; ${sumCoeff}x ${op} ${b} <span class="op-highlight">${invOp} ${b}</span> = ${d} <span class="op-highlight">${invOp} ${b}</span></div>`;
+
+  h += `<div class="step">5. Simplify the arithmetic on the right:<br>
+        &nbsp;&nbsp; ${sumCoeff}x = <b>${rhsFinal}</b> <span class="note">(${d} ${invOp} ${b} = ${rhsFinal})</span></div>`;
+
+  // Group 3: Solve
+  h += `<div class="step-group-header">PHASE 3: Solve for x</div>`;
+  h += `<div class="step">6. Divide both sides by <span class="op-highlight">${sumCoeff}</span>:<br>
+        &nbsp;&nbsp; (${sumCoeff}x) / ${sumCoeff} = ${rhsFinal} / ${sumCoeff}</div>`;
+
+  h += `<div class="step">7. Final Calculation:<br>
+        &nbsp;&nbsp; x = ${rhsFinal} ÷ ${sumCoeff}</div>`;
+
+  solArea.innerHTML = h + `<div class="final">∴ x = ${x}</div>`;
+  
+  prompt.innerHTML = `Press <b>Y</b> for Next Problem or <b>N</b> to Exit.`;
+  stage = "a";
+}
+
+window.addEventListener("keydown", e => {
+  const k = (e.key||"").toLowerCase();
+  if(stage === "q") showA();
+  else if(k === "y") showQ();
+  else if(k === "n") document.getElementById("card").innerHTML = "<h2 style='text-align:center;padding:50px;'>Great Practice! Session Ended.</h2>";
+});
+
+document.body.addEventListener("click", () => { if(stage === "q") showA(); });
+
+showQ();
+})();
+</script>
+</body>
+</html>

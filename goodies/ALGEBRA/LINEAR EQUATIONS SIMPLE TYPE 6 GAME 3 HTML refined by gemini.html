@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear Equation Solver – Variables on Both Sides</title>
+
+<style>
+body{
+  margin:0;
+  padding:24px;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:#f0f2f5;
+  display:flex;
+  justify-content:center;
+  min-height:100vh;
+  user-select:none;
+}
+.card{
+  max-width:900px;
+  width:100%;
+  background:#ffffff;
+  padding:36px;
+  border-radius:20px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.12);
+}
+.q-header{
+  font-size:14px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#6c757d;
+  margin-bottom:12px;
+}
+.q-text{
+  font-size:34px;
+  font-weight:800;
+  text-align:center;
+  padding:26px;
+  background:#f8f9fa;
+  border-left:10px solid #007bff;
+  border-radius:12px;
+  margin-bottom:30px;
+}
+.step{
+  font-size:20px;
+  margin:18px 0;
+  font-family:Consolas, monospace;
+  line-height:1.7;
+}
+.note{
+  color:#2e7d32;
+  font-weight:700;
+  font-size: 16px;
+  margin-left:8px;
+  background: #e8f5e9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.final{
+  margin-top:30px;
+  padding:20px;
+  background:#e3f2fd;
+  border:2px solid #90caf9;
+  border-radius:14px;
+  font-size:26px;
+  font-weight:900;
+  text-align:center;
+  color:#0d47a1;
+}
+.prompt{
+  margin-top:30px;
+  font-size:14px;
+  text-align:center;
+  color:#555;
+}
+</style>
+</head>
+
+<body>
+<main class="card" id="card">
+  <div id="content"></div>
+  <div class="prompt" id="prompt">
+    Press any key to reveal the solution.
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+const content = document.getElementById("content");
+const prompt  = document.getElementById("prompt");
+let stage = "q";
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+let a, b, c, d, x, form, eq;
+
+function generate(){
+  x = rand(2, 12);     // The solution
+  form = rand(1, 4);   // Selects one of the 4 equation types
+
+  // Base generation (we tweak these below based on form to ensure x is integer and positive)
+  a = rand(4, 12);
+  c = rand(2, a - 1); // Default: a > c for positive LHS coefficient
+
+  // FORM 1: ax - b = cx + d
+  if(form === 1){
+    // Logic: (a-c)x = d + b
+    let diff = a - c;
+    let sum = diff * x; // This is d+b
+    b = rand(1, sum - 1);
+    d = sum - b;
+    eq = `${a}x - ${b} = ${c}x + ${d}`;
+  }
+
+  // FORM 2: ax + b = cx + d
+  else if(form === 2){
+    // Logic: (a-c)x = d - b.  So d must be > b
+    let diff = a - c;
+    let rhsVal = diff * x;
+    b = rand(1, 20);
+    d = rhsVal + b;
+    eq = `${a}x + ${b} = ${c}x + ${d}`;
+  }
+
+  // FORM 3: ax - b = cx - d
+  else if(form === 3){
+    // Logic: (a-c)x = b - d. So b must be > d
+    let diff = a - c;
+    let rhsVal = diff * x;
+    d = rand(1, 20);
+    b = rhsVal + d;
+    eq = `${a}x - ${b} = ${c}x - ${d}`;
+  }
+
+  // FORM 4: ax + b = cx - d
+  else if(form === 4){
+    // Logic: ax - cx = -d - b  => (a-c)x = negative.
+    // To keep x positive, we swap coefficients so c > a. 
+    // New Logic: cx - ax = b + d.
+    let temp = a; a = c; c = temp; // Swap so c > a
+    let diff = c - a; // Positive difference
+    let sum = diff * x; // This is b + d
+    b = rand(1, sum - 1);
+    d = sum - b;
+    // Note: In the display equation, 'a' is the first coeff.
+    // Since we swapped, 'a' is actually smaller than 'c' numerically here.
+    eq = `${a}x + ${b} = ${c}x - ${d}`;
+  }
+}
+
+function showQ(){
+  generate();
+  content.innerHTML = `
+    <div class="q-header">Solve for x:</div>
+    <div class="q-text">${eq}</div>
+  `;
+  prompt.innerHTML = "Press any key to reveal the solution.";
+  stage = "q";
+}
+
+function showA(){
+  let steps = "";
+  
+  // --- FORM 1: ax - b = cx + d ---
+  if(form === 1){
+    steps += `<div class="step">1. Subtract ${c}x from both sides:<br> &nbsp; ${a}x - ${c}x - ${b} = ${d}</div>`;
+    steps += `<div class="step">2. Simplify x terms:<br> &nbsp; ${a-c}x - ${b} = ${d}</div>`;
+    steps += `<div class="step">3. Add ${b} to both sides:<br> &nbsp; ${a-c}x = ${d} + ${b}</div>`;
+    steps += `<div class="step">4. Simplify constants:<br> &nbsp; ${a-c}x = ${d+b}</div>`;
+    steps += `<div class="step">5. Divide by ${a-c}:<br> &nbsp; x = ${(d+b)} / ${(a-c)}</div>`;
+  }
+
+  // --- FORM 2: ax + b = cx + d ---
+  if(form === 2){
+    steps += `<div class="step">1. Subtract ${c}x from both sides:<br> &nbsp; ${a}x - ${c}x + ${b} = ${d} <span class="note">(Group x terms)</span></div>`;
+    steps += `<div class="step">2. Simplify x terms:<br> &nbsp; ${a-c}x + ${b} = ${d}</div>`;
+    steps += `<div class="step">3. Subtract ${b} from both sides:<br> &nbsp; ${a-c}x = ${d} - ${b} <span class="note">(Isolate x term)</span></div>`;
+    steps += `<div class="step">4. Simplify constants:<br> &nbsp; ${a-c}x = ${d-b}</div>`;
+    steps += `<div class="step">5. Divide by ${a-c}:<br> &nbsp; x = ${(d-b)} / ${(a-c)}</div>`;
+  }
+
+  // --- FORM 3: ax - b = cx - d ---
+  if(form === 3){
+    steps += `<div class="step">1. Subtract ${c}x from both sides:<br> &nbsp; ${a}x - ${c}x - ${b} = -${d} <span class="note">(Be careful with signs)</span></div>`;
+    steps += `<div class="step">2. Simplify x terms:<br> &nbsp; ${a-c}x - ${b} = -${d}</div>`;
+    steps += `<div class="step">3. Add ${b} to both sides:<br> &nbsp; ${a-c}x = ${b} - ${d}</div>`;
+    steps += `<div class="step">4. Simplify constants:<br> &nbsp; ${a-c}x = ${b-d}</div>`;
+    steps += `<div class="step">5. Divide by ${a-c}:<br> &nbsp; x = ${(b-d)} / ${(a-c)}</div>`;
+  }
+
+  // --- FORM 4: ax + b = cx - d ---
+  if(form === 4){
+    // Note: In generation we ensured c > a, so (a-c) is negative.
+    // This is great for teaching division by negative numbers.
+    steps += `<div class="step">1. Subtract ${c}x from both sides:<br> &nbsp; ${a}x - ${c}x + ${b} = -${d}</div>`;
+    steps += `<div class="step">2. Simplify (${a} - ${c} is negative):<br> &nbsp; ${a-c}x + ${b} = -${d}</div>`;
+    steps += `<div class="step">3. Subtract ${b} from both sides:<br> &nbsp; ${a-c}x = -${d} - ${b}</div>`;
+    steps += `<div class="step">4. Simplify constants:<br> &nbsp; ${a-c}x = -${d+b}</div>`;
+    steps += `<div class="step">5. Divide by ${a-c} (negative/negative):<br> &nbsp; x = -${d+b} / ${a-c}</div>`;
+  }
+  
+  
+  content.innerHTML += `
+    <hr style="border:0;border-top:1px solid #eee;margin:25px 0;">
+    ${steps}
+    <div class="final">∴ x = ${x}</div>
+  `;
+  prompt.innerHTML = `Press <b>Y</b> for next or <b>N</b> to exit.`;
+  stage = "a";
+}
+
+window.addEventListener("keydown",e=>{
+  const k = (e.key||"").toLowerCase();
+  if(stage==="q") showA();
+  else if(k==="y") showQ();
+  else if(k==="n"){
+    document.getElementById("card").innerHTML = 
+      "<h2 style='text-align:center;padding:40px;'>Session Ended</h2>";
+  }
+});
+
+document.body.addEventListener("click",()=>{
+  if(stage==="q") showA();
+});
+
+showQ();
+})();
+</script>
+</body>
+</html>
