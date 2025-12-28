@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Geometry Master: Circumcentre (Deep Guided Proof)</title>
+
+<style>
+:root{
+  --primary:#1a73e8;
+  --secondary:#5f6368;
+  --accent:#d93025;
+  --success:#1e8e3e;
+  --bg:#f8f9fa;
+  --card-bg:#ffffff;
+  --border:#dadce0;
+}
+body{
+  margin:0; padding:40px;
+  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  background:var(--bg);
+  color:var(--secondary);
+  display:flex; justify-content:center;
+}
+.card{
+  max-width:950px; width:100%;
+  background:var(--card-bg);
+  padding:50px; border-radius:30px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.1);
+}
+.q-text{
+  font-size:26px; font-weight:700; color:#202124;
+  padding:30px; background:#e8f0fe;
+  border-left:10px solid var(--primary);
+  border-radius:15px; margin-bottom:40px;
+}
+.step-group{
+  margin-bottom:30px; border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+}
+.step-header{
+  background:#f1f3f4; padding:15px 25px;
+  font-weight:700; color:var(--primary);
+  border-bottom:1px solid var(--border);
+  font-size:14px; text-transform:uppercase;
+}
+.step-content{
+  padding:25px;
+  font-family:'Roboto Mono', monospace;
+  font-size:18px;
+  line-height:1.9;
+}
+.formula{
+  color:var(--accent);
+  font-weight:700;
+  background:#fff5f5;
+  padding:2px 8px;
+  border-radius:4px;
+}
+.note{
+  display:inline-block;
+  margin-left:8px;
+  padding:3px 8px;
+  background:#e6f4ea;
+  color:var(--success);
+  border-radius:6px;
+  font-weight:600;
+  font-size:14px;
+}
+.final-box{
+  margin-top:40px; padding:35px;
+  background:var(--primary);
+  color:white;
+  border-radius:22px;
+  text-align:center;
+  font-size:30px;
+  font-weight:800;
+}
+.btn-prompt{
+  text-align:center; margin-top:30px;
+  font-size:14px; color:#70757a;
+}
+b{ color:#202124; }
+</style>
+</head>
+<body>
+
+<main class="card" id="app">
+  <div id="display"></div>
+  <div class="btn-prompt" id="prompt">Press any key to begin</div>
+</main>
+
+<script>
+"use strict";
+
+const display = document.getElementById("display");
+const prompt = document.getElementById("prompt");
+let stage = "start";
+let state = {};
+
+function rand(min,max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function generateTriangle(){
+  let A,B,C;
+  while(true){
+    A={x:rand(0,9),y:rand(0,9)};
+    B={x:rand(0,9),y:rand(0,9)};
+    C={x:rand(0,9),y:rand(0,9)};
+    const area=Math.abs(
+      A.x*(B.y-C.y)+B.x*(C.y-A.y)+C.x*(A.y-B.y)
+    )/2;
+    if(area>5) return {A,B,C};
+  }
+}
+
+function solve(){
+  const {A,B,C}=state;
+
+  const midAB={x:(A.x+B.x)/2,y:(A.y+B.y)/2};
+  const mAB=(B.y-A.y)/(B.x-A.x);
+  const pmAB=-1/mAB;
+
+  const midBC={x:(B.x+C.x)/2,y:(B.y+C.y)/2};
+  const mBC=(C.y-B.y)/(C.x-B.x);
+  const pmBC=-1/mBC;
+
+  const c1=midAB.y-pmAB*midAB.x;
+  const c2=midBC.y-pmBC*midBC.x;
+
+  const x0=(c2-c1)/(pmAB-pmBC);
+  const y0=pmAB*x0+c1;
+
+  const r=Math.sqrt((x0-A.x)**2+(y0-A.y)**2);
+
+  return {midAB,mAB,pmAB,c1,midBC,mBC,pmBC,c2,x0,y0,r};
+}
+
+function renderQuestion(){
+  state=generateTriangle();
+  display.innerHTML=`
+    <div class="q-text">
+      The vertices of a triangle are:<br>
+      <b>A(${state.A.x}, ${state.A.y}), B(${state.B.x}, ${state.B.y}), C(${state.C.x}, ${state.C.y})</b><br><br>
+      Find:<br>
+      (i) Coordinates of the circumcentre<br>
+      (ii) Radius of the circumcircle
+    </div>
+    <div id="sol"></div>
+  `;
+  prompt.innerHTML="Press any key to reveal the full solution.";
+  stage="question";
+}
+
+function renderSolution(){
+  const s=solve();
+  const sol=document.getElementById("sol");
+
+  sol.innerHTML=`
+  <div class="step-group">
+    <div class="step-header">Step 1: Perpendicular Bisector of AB</div>
+    <div class="step-content">
+      Midpoint formula:<br>
+      <span class="formula">M = ( (x₁+x₂)/2 , (y₁+y₂)/2 )</span><br><br>
+
+      M₁ = ((${state.A.x}+${state.B.x})/2 , (${state.A.y}+${state.B.y})/2)
+      = <b>(${s.midAB.x}, ${s.midAB.y})</b><br><br>
+
+      Slope formula:<br>
+      <span class="formula">m = (y₂−y₁)/(x₂−x₁)</span><br><br>
+
+      m<sub>AB</sub> = (${state.B.y}-${state.A.y})/(${state.B.x}-${state.A.x})
+      = <b>${s.mAB.toFixed(3)}</b><br><br>
+
+      Perpendicular slope rule:<br>
+      <span class="formula">m₁·m₂ = −1 ⇒ m₂ = −1/m₁</span><br><br>
+
+      m<sub>⊥AB</sub> = −1 / (${s.mAB.toFixed(3)})
+      = <b>${s.pmAB.toFixed(3)}</b><br><br>
+
+      Point–slope form:<br>
+      <span class="formula">y − y₁ = m(x − x₁)</span><br><br>
+
+      Substitution:<br>
+      y − ${s.midAB.y} = ${s.pmAB.toFixed(3)}(x − ${s.midAB.x})<br><br>
+
+      Simplified standard form:<br>
+      <b>${s.pmAB.toFixed(3)}x − y + ${(-s.c1).toFixed(3)} = 0</b>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 2: Perpendicular Bisector of BC</div>
+    <div class="step-content">
+      M₂ = ((${state.B.x}+${state.C.x})/2 , (${state.B.y}+${state.C.y})/2)
+      = <b>(${s.midBC.x}, ${s.midBC.y})</b><br><br>
+
+      m<sub>BC</sub> = (${state.C.y}-${state.B.y})/(${state.C.x}-${state.B.x})
+      = <b>${s.mBC.toFixed(3)}</b><br><br>
+
+      m<sub>⊥BC</sub> = −1 / (${s.mBC.toFixed(3)})
+      = <b>${s.pmBC.toFixed(3)}</b><br><br>
+
+      Equation (point–slope):<br>
+      y − ${s.midBC.y} = ${s.pmBC.toFixed(3)}(x − ${s.midBC.x})<br><br>
+
+      Simplified standard form:<br>
+      <b>${s.pmBC.toFixed(3)}x − y + ${(-s.c2).toFixed(3)} = 0</b>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 3: Solving the Two Equations</div>
+    <div class="step-content">
+      From AB bisector:<br>
+      y = ${s.pmAB.toFixed(3)}x + ${s.c1.toFixed(3)}<br><br>
+
+      Substitute into BC bisector:<br>
+      ${s.pmAB.toFixed(3)}x + ${s.c1.toFixed(3)}
+      = ${s.pmBC.toFixed(3)}x + ${s.c2.toFixed(3)}<br><br>
+
+      Solving gives:<br>
+      x = <b>${s.x0.toFixed(3)}</b><br>
+      y = <b>${s.y0.toFixed(3)}</b>
+    </div>
+  </div>
+
+  <div class="step-group">
+    <div class="step-header">Step 4: Radius of Circumcircle</div>
+    <div class="step-content">
+      Distance formula:<br>
+      <span class="formula">√[(x₂−x₁)² + (y₂−y₁)²]</span><br><br>
+
+      r = √[(${s.x0.toFixed(3)}−${state.A.x})² + (${s.y0.toFixed(3)}−${state.A.y})²]
+      = <b>${s.r.toFixed(3)}</b>
+    </div>
+  </div>
+
+  <div class="final-box">
+    Circumcentre O = (${s.x0.toFixed(3)}, ${s.y0.toFixed(3)})<br>
+    Radius = ${s.r.toFixed(3)}
+  </div>
+  `;
+
+  prompt.innerHTML="Press <b>Y</b> for a new triangle or <b>N</b> to exit.";
+  stage="solution";
+}
+
+window.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(stage==="start"||k==="y") renderQuestion();
+  else if(stage==="question") renderSolution();
+  else if(k==="n"){
+    document.body.innerHTML=
+      "<h1 style='background:#1a73e8;color:white;padding:100px;border-radius:40px;text-align:center;'>Geometry mastered step by step.</h1>";
+  }
+});
+
+document.body.addEventListener("click",()=>{
+  if(stage==="start") renderQuestion();
+  else if(stage==="question") renderSolution();
+});
+</script>
+</body>
+</html>

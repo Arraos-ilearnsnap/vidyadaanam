@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Geometry Master: Circumcentre</title>
+<style>
+:root{
+  --primary:#1a73e8;
+  --secondary:#5f6368;
+  --accent:#d93025;
+  --success:#1e8e3e;
+  --bg:#f8f9fa;
+  --card-bg:#ffffff;
+}
+body{
+  margin:0; padding:40px;
+  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  background:var(--bg);
+  color:var(--secondary);
+  display:flex; justify-content:center;
+}
+.card{
+  max-width:900px; width:100%;
+  background:var(--card-bg);
+  padding:50px; border-radius:30px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.1);
+}
+.q-text{
+  font-size:26px; font-weight:700; color:#202124;
+  padding:30px; background:#e8f0fe;
+  border-left:10px solid var(--primary);
+  border-radius:15px; margin-bottom:40px;
+}
+.step-group{
+  margin-bottom:30px; border:1px solid #dadce0;
+  border-radius:16px; overflow:hidden;
+}
+.step-header{
+  background:#f1f3f4; padding:15px 25px;
+  font-weight:700; color:var(--primary);
+  border-bottom:1px solid #dadce0; font-size:14px; text-transform:uppercase;
+}
+.step-content{ padding:25px; font-family:'Roboto Mono', monospace; font-size:18px; line-height:1.8; }
+.formula{ color:var(--accent); font-weight:700; background:#fff5f5; padding:2px 8px; border-radius:4px; }
+.final-box{
+  margin-top:40px; padding:35px;
+  background:var(--primary); color:white;
+  border-radius:20px; text-align:center; font-size:32px; font-weight:800;
+}
+.btn-prompt{
+  text-align:center; margin-top:30px; font-size:14px; color:#70757a;
+}
+b{ color:#202124; }
+</style>
+</head>
+<body>
+
+<main class="card" id="app">
+  <div id="display"></div>
+  <div class="btn-prompt" id="prompt">Press any key to begin</div>
+</main>
+
+<script>
+"use strict";
+
+const display = document.getElementById("display");
+const prompt = document.getElementById("prompt");
+let stage = "start";
+let state = {};
+
+function gcd(a, b) {
+    return b ? gcd(b, a % b) : a;
+}
+
+function toFraction(decimal) {
+    if (Number.isInteger(decimal)) return decimal.toString();
+    const len = decimal.toString().split('.')[1]?.length || 0;
+    const denominator = Math.pow(10, Math.min(len, 3));
+    const numerator = Math.round(decimal * denominator);
+    const common = Math.abs(gcd(numerator, denominator));
+    return `${numerator/common}/${denominator/common}`;
+}
+
+function generateTriangle() {
+    let A, B, C;
+    while (true) {
+        A = {x: Math.floor(Math.random()*11), y: Math.floor(Math.random()*11)};
+        B = {x: Math.floor(Math.random()*11), y: Math.floor(Math.random()*11)};
+        C = {x: Math.floor(Math.random()*11), y: Math.floor(Math.random()*11)};
+        
+        const area = Math.abs(A.x*(B.y - C.y) + B.x*(C.y - A.y) + C.x*(A.y - B.y)) / 2;
+        // Avoid slopes that are 0 or undefined for this specific educational flow 
+        // Or triangles that are too "flat"
+        const mAB = (B.y - A.y) / (B.x - A.x);
+        const mBC = (C.y - B.y) / (C.x - B.x);
+        
+        if (area > 5 && isFinite(mAB) && isFinite(mBC) && mAB !== 0 && mBC !== 0) {
+            return {A, B, C};
+        }
+    }
+}
+
+function solve() {
+    const {A, B, C} = state;
+    
+    // Side AB logic
+    const midAB = {x: (A.x+B.x)/2, y: (A.y+B.y)/2};
+    const mAB = (B.y-A.y)/(B.x-A.x);
+    const pmAB = -1/mAB; // m1*m2 = -1
+    const cAB = midAB.y - pmAB * midAB.x;
+
+    // Side BC logic
+    const midBC = {x: (B.x+C.x)/2, y: (B.y+C.y)/2};
+    const mBC = (C.y-B.y)/(C.x-B.x);
+    const pmBC = -1/mBC;
+    const cBC = midBC.y - pmBC * midBC.x;
+
+    // Intersection
+    const circumX = (cBC - cAB) / (pmAB - pmBC);
+    const circumY = pmAB * circumX + cAB;
+    const radius = Math.sqrt((circumX - A.x)**2 + (circumY - A.y)**2);
+
+    return { midAB, mAB, pmAB, cAB, midBC, mBC, pmBC, cBC, circumX, circumY, radius };
+}
+
+function renderQuestion() {
+    state = generateTriangle();
+    display.innerHTML = `
+        <div style="text-transform:uppercase; font-weight:bold; letter-spacing:1px; margin-bottom:10px;">Triangle Analysis</div>
+        <div class="q-text">
+            Given a triangle with vertices:<br>
+            <b>A(${state.A.x}, ${state.A.y}), B(${state.B.x}, ${state.B.y}), and C(${state.C.x}, ${state.C.y})</b><br><br>
+            Calculate the Circumcentre (O) and the Circumradius (R).
+        </div>
+        <div id="sol-area"></div>
+    `;
+    prompt.innerHTML = "Press <b>SPACE</b> or <b>CLICK</b> to see the mathematical proof.";
+    stage = "question";
+}
+
+function renderSolution() {
+    const s = solve();
+    const solArea = document.getElementById("sol-area");
+    
+    solArea.innerHTML = `
+        <div class="step-group">
+            <div class="step-header">Step 1: The Perpendicular Bisector of AB</div>
+            <div class="step-content">
+                • Midpoint M₁: ((${state.A.x}+${state.B.x})/2, (${state.A.y}+${state.B.y})/2) = <b>(${s.midAB.x}, ${s.midAB.y})</b><br>
+                • Slope m_AB: (${state.B.y}-${state.A.y})/(${state.B.x}-${state.A.x}) = <b>${s.mAB.toFixed(3)}</b><br>
+                • Perpendicular Slope: <span class="formula">m₁m₂ = -1</span> → <b>${s.pmAB.toFixed(3)}</b><br>
+                • Equation: y - ${s.midAB.y} = ${s.pmAB.toFixed(3)}(x - ${s.midAB.x})
+            </div>
+        </div>
+
+        <div class="step-group">
+            <div class="step-header">Step 2: The Perpendicular Bisector of BC</div>
+            <div class="step-content">
+                • Midpoint M₂: ((${state.B.x}+${state.C.x})/2, (${state.B.y}+${state.C.y})/2) = <b>(${s.midBC.x}, ${s.midBC.y})</b><br>
+                • Slope m_BC: (${state.C.y}-${state.B.y})/(${state.C.x}-${state.B.x}) = <b>${s.mBC.toFixed(3)}</b><br>
+                • Perpendicular Slope: <b>${s.pmBC.toFixed(3)}</b><br>
+                • Equation: y - ${s.midBC.y} = ${s.pmBC.toFixed(3)}(x - ${s.midBC.x})
+            </div>
+        </div>
+
+        <div class="step-group">
+            <div class="step-header">Step 3: Intersection & Radius</div>
+            <div class="step-content">
+                • Solve the linear system to find intersection O(x, y):<br>
+                &nbsp;&nbsp;<b>O = (${s.circumX.toFixed(3)}, ${s.circumY.toFixed(3)})</b><br>
+                • Distance OA (Radius): √[(${s.circumX.toFixed(3)}-${state.A.x})² + (${s.circumY.toFixed(3)}-${state.A.y})²]<br>
+                &nbsp;&nbsp;<b>R = ${s.radius.toFixed(3)}</b>
+            </div>
+        </div>
+
+        <div class="final-box">
+            O = (${s.circumX.toFixed(3)}, ${s.circumY.toFixed(3)})<br>
+            Radius = ${s.radius.toFixed(3)}
+        </div>
+    `;
+    prompt.innerHTML = "Press <b>Y</b> for a new challenge or <b>N</b> to finish.";
+    stage = "solution";
+}
+
+window.addEventListener("keydown", e => {
+    const key = e.key.toLowerCase();
+    if (stage === "start" || key === "y") renderQuestion();
+    else if (stage === "question") renderSolution();
+    else if (key === "n") {
+        document.body.innerHTML = "<h1 style='color:white; background:var(--primary); padding:100px; border-radius:50px;'>Keep Exploring Geometry!</h1>";
+    }
+});
+
+document.body.addEventListener("click", () => {
+    if (stage === "start") renderQuestion();
+    else if (stage === "question") renderSolution();
+});
+
+</script>
+</body>
+</html>
