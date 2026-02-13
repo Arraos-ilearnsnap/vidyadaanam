@@ -9,6 +9,6 @@ DISCLAIMER:
 3. FURTHERMORE THE PROMPTER HAS TO TAKE AT FACE VALUE THE CODE THAT AI GENERATES. "THE PROMPTER DOES NOT HAVE THE SKILL CURRENTLY TO UNDERSTAND THE CODE".
 4. "Copyright Status of Mathematics":Universal Rule- Mathematical facts, methods, and solutions are NOT copyrightable. This is settled law globally. Equations, Numerical solutions, Logical steps, Algorithms, Proofs as methods, etc.,these are considered facts, ideas, or processes, which copyright law explicitly excludes.
 5. "HAVE FUN, YOU CAN RE-FEED IT TO AI MODELS" OF YOUR CHOICE AND TWEAK THEM TO YOUR OWN NEEDS AND REQUIREMENTS.
-
+6. Games are indexed on this website: https://sites.google.com/view/vidyadaanam-games-index/home 
 
 Vidyadaanam by Ambarish R Rao is marked CC0 1.0 Universal. To view a copy of this mark, visit https://creativecommons.org/publicdomain/zero/1.0/
